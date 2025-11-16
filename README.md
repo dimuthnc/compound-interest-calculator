@@ -660,7 +660,6 @@ Planned or potential future enhancements (from the PRD):
 
 > TODO: Add a license.
 
-If you plan to open source this project, consider adding an SPDX-compatible license file (e.g. `MIT`, `Apache-2.0`) at the repository root and link it here.
 
 ---
 
