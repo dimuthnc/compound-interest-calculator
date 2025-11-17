@@ -124,6 +124,7 @@ export function useCalculator() {
         window.localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(payload));
       } catch {
         // Ignore storage errors.
+        void 0;
       }
     }, AUTOSAVE_DELAY_MS);
 
@@ -263,7 +264,10 @@ export function useCalculator() {
       if (typeof window !== 'undefined') {
         window.localStorage.removeItem(AUTOSAVE_KEY);
       }
-    } catch {}
+    } catch {
+      // Intentionally ignore storage errors in restricted environments
+      void 0;
+    }
   };
 
   return {

@@ -8,6 +8,7 @@ import {
   Legend,
   CategoryScale,
 } from "chart.js";
+import type { TooltipItem } from "chart.js";
 import { Line } from "react-chartjs-2";
 import type { HistoricalSnapshot } from "../../types";
 import { Paper, Alert } from "@mui/material";
@@ -93,9 +94,9 @@ export function HistoryChart({ history }: HistoryChartProps) {
       },
       tooltip: {
         callbacks: {
-          label: (ctx: any) => {
+          label: (ctx: TooltipItem<"line">) => {
             const label = ctx.dataset.label || "";
-            const value = ctx.parsed.y;
+            const value = ctx.parsed.y as number | null | undefined;
             if (value === null || value === undefined) return `${label}: N/A`;
             return `${label}: ${value.toFixed(2)}%`;
           },
