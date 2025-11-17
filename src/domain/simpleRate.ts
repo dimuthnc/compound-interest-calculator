@@ -49,8 +49,7 @@ export function computeSimpleRate(input: SimpleRateInput): number | null {
   }
 
   // Ensure the valuation date is after or equal to the last cash flow date.
-  const valuationEventDate = valuationDate;
-  events.push({ date: valuationEventDate, balance });
+  events.push({ date: valuationDate, balance });
 
   // Accumulate balance × days over each interval between events.
   let sumWeighted = 0;
@@ -60,6 +59,11 @@ export function computeSimpleRate(input: SimpleRateInput): number | null {
 
     const days = differenceInCalendarDays(end.date, start.date);
     if (days > 0) {
+      // If the invested balance goes negative for any positive-day interval,
+      // consider the denominator invalid (over-withdrawal scenario).
+      if (start.balance < 0) {
+        return null;
+      }
       sumWeighted += start.balance * days;
     }
   }
