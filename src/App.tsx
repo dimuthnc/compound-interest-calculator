@@ -7,9 +7,9 @@ import ResultsPanel from "./components/results/ResultsPanel";
 import HistoryTable from "./components/history/HistoryTable";
 import HistoryChart from "./components/history/HistoryChart";
 import ImportExportPanel from "./components/io/ImportExportPanel";
-import { Card, CardContent, CardHeader, Button, Alert, Stack, Typography, Box } from "@mui/material";
-import AssessmentOutlined from "@mui/icons-material/AssessmentOutlined";
-import DeleteSweepOutlined from "@mui/icons-material/DeleteSweepOutlined";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Save, Trash2 } from "lucide-react";
 
 function App() {
   const {
@@ -32,93 +32,75 @@ function App() {
 
   return (
     <Layout>
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: 'repeat(12, 1fr)' },
-          gap: 3,
-          alignItems: 'stretch',
-        }}
-      >
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Row 1: Cash Flows (span 6), Current Value (span 3), Import/Export (span 3) */}
-        <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 6' } }}>
+        <div className="md:col-span-12 lg:col-span-6">
           <CashFlowTable
             cashFlows={state.cashFlows}
             onAddCashFlow={addCashFlow}
             onUpdateCashFlow={updateCashFlow}
             onDeleteCashFlow={deleteCashFlow}
           />
-        </Box>
+        </div>
 
-        <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 3' } }}>
-          <Card variant="outlined" sx={{ height: '100%' }}>
-            <CardHeader titleTypographyProps={{ variant: 'h2', fontSize: '1rem' }} title="Fund Details" />
-            <CardContent>
-              <CurrentValueForm
-                valuationDate={state.valuationDate}
-                currentValue={state.currentValue}
-                fundName={state.fundName ?? null}
-                onValuationDateChange={setValuationDate}
-                onCurrentValueChange={setCurrentValue}
-                onFundNameChange={setFundName}
-              />
-            </CardContent>
-          </Card>
-        </Box>
+        <div className="md:col-span-6 lg:col-span-3">
+          <CurrentValueForm
+            valuationDate={state.valuationDate}
+            currentValue={state.currentValue}
+            fundName={state.fundName ?? null}
+            onValuationDateChange={setValuationDate}
+            onCurrentValueChange={setCurrentValue}
+            onFundNameChange={setFundName}
+          />
+        </div>
 
-        <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 3' } }}>
+        <div className="md:col-span-6 lg:col-span-3">
           <ImportExportPanel calculatorState={state} onImportScenario={importScenario} />
-        </Box>
+        </div>
 
         {/* Row 2: Results (wide) and Actions */}
-        <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 8' } }}>
+        <div className="md:col-span-12 lg:col-span-8">
           <ResultsPanel netInvested={netInvested} profit={profit} irr={irr} simpleRate={simpleRate} />
-        </Box>
+        </div>
 
-        <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 4' } }}>
-          <Card variant="outlined" sx={{ height: '100%' }}>
-            <CardHeader titleTypographyProps={{ variant: 'h2', fontSize: '1rem' }} title="Actions" />
+        <div className="md:col-span-12 lg:col-span-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Actions</CardTitle>
+            </CardHeader>
             <CardContent>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between">
-                <Button onClick={saveSnapshot} variant="contained" size="medium" startIcon={<AssessmentOutlined />} color="primary" sx={{ whiteSpace: 'nowrap' }}>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button onClick={saveSnapshot} className="w-full">
+                  <Save className="mr-2 h-4 w-4" />
                   Save Snapshot
                 </Button>
-                <Button onClick={clearAll} variant="outlined" size="medium" color="error" startIcon={<DeleteSweepOutlined />} sx={{ whiteSpace: 'nowrap' }}>
+                <Button onClick={clearAll} variant="destructive" className="w-full">
+                  <Trash2 className="mr-2 h-4 w-4" />
                   Clear All
                 </Button>
-              </Stack>
+              </div>
               {saveSnapshotResult?.error && (
-                <Alert severity="error" sx={{ mt: 2 }}>
+                <div className="mt-3 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-800">
                   {saveSnapshotResult.error}
-                </Alert>
+                </div>
               )}
-              <Typography variant="caption" color="text.secondary" display="block" mt={2}>
-                Clear All resets cash flows, valuation, current value, and history, and wipes the saved session.
-              </Typography>
+              <p className="mt-3 text-xs text-muted-foreground">
+                "Clear All" resets everything, including cash flows, valuation, and history. This action cannot be undone.
+              </p>
             </CardContent>
           </Card>
-        </Box>
+        </div>
 
-        {/* Row 3: History table (wide) */}
-        <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 8' } }}>
-          <Card variant="outlined">
-            <CardHeader titleTypographyProps={{ variant: 'h2', fontSize: '1rem' }} title="History" />
-            <CardContent>
-              <HistoryTable history={state.history} />
-            </CardContent>
-          </Card>
-        </Box>
+        {/* Row 3: History Table */}
+        <div className="md:col-span-12">
+          <HistoryTable history={state.history} />
+        </div>
 
-        {/* Row 4: History chart (wide) */}
-        <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 8' } }}>
-          <Card variant="outlined">
-            <CardHeader titleTypographyProps={{ variant: 'h2', fontSize: '1rem' }} title="History Chart" />
-            <CardContent>
-              <HistoryChart history={state.history} />
-            </CardContent>
-          </Card>
-        </Box>
-      </Box>
+        {/* Row 4: History Chart */}
+        <div className="md:col-span-12">
+          <HistoryChart history={state.history} />
+        </div>
+      </div>
     </Layout>
   );
 }

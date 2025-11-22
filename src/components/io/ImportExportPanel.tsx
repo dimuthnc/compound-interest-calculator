@@ -2,9 +2,9 @@ import type React from "react";
 import { useRef, useState } from "react";
 import type { CalculatorState } from "../../types";
 import { buildExportJson, parseImportedJson } from "../../domain/jsonSchema";
-import { Card, CardHeader, CardContent, Button, Stack, Alert, Typography } from '@mui/material';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
-import DownloadIcon from '@mui/icons-material/Download';
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Upload, Download } from "lucide-react";
 
 export interface ImportExportPanelProps {
   calculatorState: CalculatorState;
@@ -67,22 +67,30 @@ export function ImportExportPanel({ calculatorState, onImportScenario }: ImportE
   };
 
   return (
-    <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <CardHeader titleTypographyProps={{ variant: 'h2', fontSize: '1rem' }} title="Import / Export" />
-      <CardContent sx={{ flexGrow: 1 }}>
-        <Typography variant="body2" color="text.secondary" mb={2}>
-          Import an existing scenario or export current cash flows, valuation and history for backup.
-        </Typography>
-        <Stack direction="column" spacing={1.5} mb={1}>
-          <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={handleImportClick} size="medium" fullWidth>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Import / Export</CardTitle>
+        <CardDescription>
+          Save or load your scenario, including cash flows and history.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          <Button variant="outline" className="w-full" onClick={handleImportClick}>
+            <Upload className="mr-2 h-4 w-4" />
             Import JSON
           </Button>
-          <Button variant="contained" startIcon={<DownloadIcon />} onClick={handleExportClick} size="medium" color="primary" fullWidth>
+          <Button className="w-full" onClick={handleExportClick}>
+            <Download className="mr-2 h-4 w-4" />
             Export JSON
           </Button>
-        </Stack>
+        </div>
         <input ref={fileInputRef} type="file" accept="application/json" hidden onChange={handleFileChange} />
-        {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+        {error && (
+          <div className="mt-3 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+            {error}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
