@@ -2,17 +2,47 @@ name: CI
 
 on:
   push:
-    branches: ["**"]
+    branches:
+      - main
+      - 'feature/**'
   pull_request:
+    branches:
+      - main
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  enforce-branch-name-precheck:
+    name: Enforce feature/* branch naming (pre-check)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Validate PR head branch follows feature/* pattern
+        run: |
+          echo "Head ref: '${GITHUB_HEAD_REF}'"
+          if [[ -z "${GITHUB_HEAD_REF}" ]]; then
+            echo "::error::GITHUB_HEAD_REF is empty; this job is intended to run on pull_request events only."
+            exit 1
+          fi
+
+          if [[ "${GITHUB_HEAD_REF}" != feature/* ]]; then
+            echo "::error::Pull requests into main must come from branches named 'feature/*'. Current head branch: '${GITHUB_HEAD_REF}'"
+            exit 1
+          fi
+
+          echo "Branch name '${GITHUB_HEAD_REF}' is valid (matches feature/*)."
+
   build-and-test:
     name: Lint, Test and Build (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
+    needs: [enforce-branch-name-precheck]
+    # Only run the job for PRs when the head branch matches feature/*
+    # For push events this condition is not evaluated (github.event_name != 'pull_request'), so pushes to main/feature/** run normally.
+    if: >
+      github.event_name != 'pull_request' || startsWith(github.head_ref, 'feature/')
+
     strategy:
       fail-fast: false
       matrix:
@@ -47,4 +77,3 @@ jobs:
           name: dist-${{ github.sha }}
           path: dist
           if-no-files-found: warn
-

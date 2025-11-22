@@ -663,4 +663,8 @@ Planned or potential future enhancements (from the PRD):
 
 ---
 
+For details on how to contribute and the branching model, see
+[Git Branching & Contribution Workflow](CONTRIBUTING.md).
+
+
 If you have suggestions, bug reports, or feature ideas, feel free to open an issue or a pull request.

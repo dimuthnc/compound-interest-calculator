@@ -1,0 +1,27 @@
+name: Enforce Branch Naming
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+    branches:
+      - main
+
+jobs:
+  enforce-branch-name:
+    name: Enforce feature/* branch naming for PRs into main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check source branch naming convention
+        run: |
+          echo "Head ref: '${GITHUB_HEAD_REF}'"
+          if [[ -z "${GITHUB_HEAD_REF}" ]]; then
+            echo "::error::GITHUB_HEAD_REF is empty; this workflow is intended to run on pull_request events only."
+            exit 1
+          fi
+
+          if [[ "${GITHUB_HEAD_REF}" != feature/* ]]; then
+            echo "::error::Pull requests into main must come from branches named 'feature/*'. Current head branch: '${GITHUB_HEAD_REF}'"
+            exit 1
+          fi
+
+          echo "Branch name '${GITHUB_HEAD_REF}' is valid (matches feature/*)."
