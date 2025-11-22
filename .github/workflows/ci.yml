@@ -38,15 +38,11 @@ jobs:
     name: Lint, Test and Build (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     needs: [enforce-branch-name-precheck]
-    # Only run the job for PRs when the head branch matches feature/*
-    # For push events this condition is not evaluated (github.event_name != 'pull_request'), so pushes to main/feature/** run normally.
-    if: >
-      github.event_name != 'pull_request' || startsWith(github.head_ref, 'feature/')
 
     strategy:
       fail-fast: false
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [20.x]
 
     steps:
       - name: Checkout repository
@@ -71,7 +67,6 @@ jobs:
         run: npm run build
 
       - name: Upload build artifact (dist)
-        if: matrix.node-version == '20.x'
         uses: actions/upload-artifact@v4
         with:
           name: dist-${{ github.sha }}
