@@ -1,8 +1,16 @@
 import type { CashFlowEntry } from "../../types";
 import type React from "react";
-import { Box, TextField, Select, MenuItem, IconButton, Tooltip } from '@mui/material';
-import type { SelectChangeEvent } from '@mui/material/Select';
-import DeleteOutline from '@mui/icons-material/DeleteOutline';
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Trash2 } from "lucide-react";
 
 export interface CashFlowRowProps {
   entry: CashFlowEntry;
@@ -20,60 +28,66 @@ export function CashFlowRow({ entry, onUpdate, onDelete }: CashFlowRowProps) {
     if (Number.isNaN(amount)) return;
     onUpdate(entry.id, { amount });
   };
-  const handleDirectionChange = (e: SelectChangeEvent) => {
-    onUpdate(entry.id, { direction: e.target.value as CashFlowEntry['direction'] });
+  const handleDirectionChange = (value: string) => {
+    onUpdate(entry.id, { direction: value as CashFlowEntry['direction'] });
   };
 
   return (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: '1fr', sm: 'repeat(12, 1fr)' },
-        gap: 1,
-        py: 1,
-        alignItems: 'center',
-      }}
-    >
-      <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 3' } }}>
-        <TextField
-          label="Date"
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-12 sm:gap-3 items-center">
+      <div className="sm:col-span-4">
+        <Input
           type="date"
           value={entry.date}
           onChange={handleDateChange}
-          fullWidth
-          InputLabelProps={{ shrink: true }}
+          aria-label="Date"
         />
-      </Box>
-      <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 3' } }}>
-        <TextField
-          label="Amount"
+      </div>
+      <div className="sm:col-span-3">
+        <Input
           type="number"
-          inputProps={{ step: '0.01', min: 0 }}
+          step="0.01"
+          min="0"
           value={entry.amount}
           onChange={handleAmountChange}
-          fullWidth
+          aria-label="Amount"
+          placeholder="Amount"
         />
-      </Box>
-      <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 3' } }}>
+      </div>
+      <div className="sm:col-span-3">
         <Select
           value={entry.direction}
-          onChange={handleDirectionChange}
-          fullWidth
-          displayEmpty
-          aria-label="Direction"
+          onValueChange={handleDirectionChange}
         >
-          <MenuItem value="deposit">Deposit</MenuItem>
-          <MenuItem value="withdrawal">Withdrawal</MenuItem>
+          <SelectTrigger aria-label="Direction">
+            <SelectValue placeholder="Direction" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="deposit">Deposit</SelectItem>
+            <SelectItem value="withdrawal">Withdrawal</SelectItem>
+          </SelectContent>
         </Select>
-      </Box>
-      <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 3' }, textAlign: { xs: 'left', sm: 'right' } }}>
-        <Tooltip title="Delete cash flow">
-          <IconButton color="error" onClick={() => onDelete(entry.id)} size="small" aria-label="delete cash flow">
-            <DeleteOutline />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    </Box>
+      </div>
+      <div className="sm:col-span-2 text-right">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-destructive"
+                onClick={() => onDelete(entry.id)}
+                aria-label="delete cash flow"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Delete cash flow</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+    </div>
   );
 }
 

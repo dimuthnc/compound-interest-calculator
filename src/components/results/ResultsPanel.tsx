@@ -1,4 +1,5 @@
-import { Card, CardContent, CardHeader, Typography, Chip, Alert, Stack, Box } from "@mui/material";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export interface ResultsPanelProps {
   netInvested: number;
@@ -9,57 +10,61 @@ export interface ResultsPanelProps {
 
 export function ResultsPanel({ netInvested, profit, irr, simpleRate }: ResultsPanelProps) {
   const formatCurrency = (value: number): string =>
-    value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const formatPercent = (value: number): string => `${(value * 100).toFixed(2)}%`;
   const profitLabel = profit >= 0 ? "Profit" : "Loss";
 
+  const profitColor = profit > 0 ? "text-green-600" : profit < 0 ? "text-red-600" : "text-foreground";
+
   return (
-    <Card variant="outlined" sx={{ mt: 1 }}>
-      <CardHeader titleTypographyProps={{ variant: "h2", fontSize: "1rem" }} title="Results" />
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Results</CardTitle>
+        <CardDescription>
+          Key performance indicators based on your cash flows and valuation.
+        </CardDescription>
+      </CardHeader>
       <CardContent>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' }, gap: 2 }}>
-          <Box>
-            <Typography variant="caption" color="text.secondary">Net Invested</Typography>
-            <Typography variant="body1" fontWeight={600}>{formatCurrency(netInvested)}</Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary">{profitLabel}</Typography>
-            <Typography
-              variant="body1"
-              fontWeight={600}
-              color={profit > 0 ? 'success.main' : profit < 0 ? 'error.main' : 'text.primary'}
-            >
-              {formatCurrency(profit)}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary">IRR (Annualised)</Typography>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="space-y-1">
+            <p className="text-xs font-medium uppercase text-muted-foreground">Net Invested</p>
+            <p className="text-lg font-semibold">{formatCurrency(netInvested)}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs font-medium uppercase text-muted-foreground">{profitLabel}</p>
+            <p className={`text-lg font-semibold ${profitColor}`}>{formatCurrency(profit)}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs font-medium uppercase text-muted-foreground">IRR (Annualised)</p>
             {irr !== null ? (
-              <Chip label={formatPercent(irr)} color="primary" size="small" />
+              <Badge variant="default">{formatPercent(irr)}</Badge>
             ) : (
-              <Typography variant="body2" color="text.disabled">N/A</Typography>
+              <p className="text-sm text-muted-foreground">N/A</p>
             )}
-          </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary">Simple Annual Rate</Typography>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs font-medium uppercase text-muted-foreground">Simple Annual Rate</p>
             {simpleRate !== null ? (
-              <Chip label={formatPercent(simpleRate)} color="secondary" size="small" />
+              <Badge variant="secondary">{formatPercent(simpleRate)}</Badge>
             ) : (
-              <Typography variant="body2" color="text.disabled">N/A</Typography>
+              <p className="text-sm text-muted-foreground">N/A</p>
             )}
-          </Box>
-        </Box>
+          </div>
+        </div>
         {(irr === null || simpleRate === null) && (
-          <Alert severity="info" sx={{ mt: 2 }}>
-            {irr === null && 'IRR requires at least one deposit and one withdrawal plus a current value. '}
+          <div className="mt-4 rounded-lg border border-blue-300 bg-blue-50 p-3 text-sm text-blue-800">
+            {irr === null && 'IRR requires both positive and negative cash flows (e.g., deposits and a final value/withdrawal). '}
             {simpleRate === null && 'Simple rate requires a current value and at least one cash flow.'}
-          </Alert>
+          </div>
         )}
-        <Stack mt={2} spacing={0.5}>
-          <Typography variant="caption" color="text.secondary">
-            IRR accounts for cash flow timing via discounting; simple rate averages return over invested balance × time.
-          </Typography>
-        </Stack>
+        <div className="mt-4">
+          <p className="text-xs text-muted-foreground">
+            <strong>IRR:</strong> Accounts for the timing of cash flows (time-weighted).
+          </p>
+          <p className="text-xs text-muted-foreground">
+            <strong>Simple Rate:</strong> Averages return over the capital invested over time (money-weighted).
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

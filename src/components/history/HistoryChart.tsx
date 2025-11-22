@@ -8,10 +8,11 @@ import {
   Legend,
   CategoryScale,
 } from "chart.js";
+import 'chartjs-adapter-date-fns';
 import type { TooltipItem } from "chart.js";
 import { Line } from "react-chartjs-2";
 import type { HistoricalSnapshot } from "../../types";
-import { Paper, Alert } from "@mui/material";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 // Register Chart.js components once for this module.
 ChartJS.register(
@@ -31,13 +32,9 @@ export interface HistoryChartProps {
 export function HistoryChart({ history }: HistoryChartProps) {
   if (history.length < 2) {
     return (
-      <Alert
-        severity="info"
-        variant="outlined"
-        sx={{ mt: 2 }}
-      >
-        Add more snapshots over time to see a trend line.
-      </Alert>
+      <div className="mt-2 rounded-lg border border-blue-300 bg-blue-50 p-4 text-sm text-blue-800">
+        Add at least two snapshots over time to see a trend line.
+      </div>
     );
   }
 
@@ -105,35 +102,45 @@ export function HistoryChart({ history }: HistoryChartProps) {
     },
     scales: {
       x: {
-        display: true,
+        type: "time" as const,
+        time: {
+          unit: "day" as const,
+          tooltipFormat: "MMM d, yyyy HH:mm",
+        },
         title: {
           display: true,
-          text: "Calculation time",
+          text: "Calculation Date",
         },
-        ticks: {
-          maxRotation: 45,
-          minRotation: 0,
-          autoSkip: true,
-          maxTicksLimit: 6,
-        },
+        grid: {
+          display: false,
+        }
       },
       y: {
-        display: true,
         title: {
           display: true,
-          text: "Rate (%)",
+          text: "Annualised Rate (%)",
         },
         ticks: {
-          callback: (value: number | string) => `${value}%`,
+          callback: (value: string | number) => `${value}%`,
         },
       },
     },
   };
 
   return (
-    <Paper variant="outlined" sx={{ mt: 2, height: 280, p: 2 }}>
-      <Line data={data} options={options} />
-    </Paper>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Performance Over Time</CardTitle>
+        <CardDescription>
+          Visual timeline of IRR and Simple Annual Rate across saved snapshots.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="relative h-[300px]">
+          <Line key={JSON.stringify(history)} data={data} options={options} />
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

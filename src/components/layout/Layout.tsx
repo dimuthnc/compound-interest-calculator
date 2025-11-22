@@ -1,25 +1,23 @@
 import type { PropsWithChildren } from "react";
-import { AppBar, Toolbar, Typography, Container, Box } from '@mui/material';
 
 export function Layout({ children }: PropsWithChildren) {
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      <AppBar position="sticky" color="primary" enableColorOnDark>
-        <Toolbar sx={{ flexDirection: 'column', alignItems: 'flex-start', py: 1.5 }}>
-          <Typography variant="h1" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
-            Effective Interest Rate Calculator
-          </Typography>
-          <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
-            Model deposits and withdrawals; calculate IRR & simple annual returns.
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      <Container maxWidth="lg" sx={{ py: { xs: 3, sm: 5 } }}>
-        <Box display="flex" flexDirection="column" gap={4}>
-          {children}
-        </Box>
-      </Container>
-    </Box>
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-14 items-center">
+          <div className="mr-4 hidden md:flex">
+            <a className="mr-6 flex items-center space-x-2" href="/">
+              <span className="hidden font-bold sm:inline-block">
+                Effective Interest Rate Calculator
+              </span>
+            </a>
+          </div>
+        </div>
+      </header>
+      <main className="container mx-auto px-4 py-5 sm:py-8">
+        <div className="flex flex-col gap-4">{children}</div>
+      </main>
+    </div>
   );
 }
 
