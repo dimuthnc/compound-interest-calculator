@@ -126,7 +126,7 @@ This project provides a **transparent, inspectable** and **client-side** calcula
 
 For full product requirements and design details, see:
 
-- [effective-interest-calculator-prd-v3-architecture.md](./effective-interest-calculator-prd-v3-architecture.md)
+- [effective-interest-calculator-prd-v3-architecture.md](docs/effective-interest-calculator-prd-v3-architecture.md)
 
 ---
 
