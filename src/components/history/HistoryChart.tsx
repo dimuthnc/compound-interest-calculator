@@ -39,10 +39,10 @@ export function HistoryChart({ history }: HistoryChartProps) {
   }
 
   const sorted = [...history].sort((a, b) =>
-    a.calculationDateTime.localeCompare(b.calculationDateTime),
+    a.valuationDate.localeCompare(b.valuationDate),
   );
 
-  const labels = sorted.map((s) => s.calculationDateTime);
+  const labels = sorted.map((s) => s.valuationDate);
 
   const irrData = sorted.map((s) => (s.irr !== null ? s.irr * 100 : null));
   const simpleRateData = sorted.map((s) =>
@@ -105,11 +105,11 @@ export function HistoryChart({ history }: HistoryChartProps) {
         type: "time" as const,
         time: {
           unit: "day" as const,
-          tooltipFormat: "MMM d, yyyy HH:mm",
+          tooltipFormat: "MMM d, yyyy",
         },
         title: {
           display: true,
-          text: "Calculation Date",
+          text: "Valuation Date",
         },
         grid: {
           display: false,
