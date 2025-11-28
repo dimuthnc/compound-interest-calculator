@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { CalculatorState, CashFlowEntry } from "../types";
+import type { CalculatorState, CashFlowEntry, HistoricalSnapshot } from "../types";
 import {
   sortCashFlowsByDate,
   computeNetInvested,
@@ -16,10 +16,15 @@ export interface SaveSnapshotResult {
 const AUTOSAVE_KEY = "effective-interest-calculator-state-v1";
 const AUTOSAVE_DELAY_MS = 400;
 
+function getTodayIsoDate(): string {
+  const today = new Date();
+  return today.toISOString().slice(0, 10);
+}
+
 function createEmptyState(): CalculatorState {
   return {
     cashFlows: [],
-    valuationDate: null,
+    valuationDate: getTodayIsoDate(), // Always default to today
     currentValue: null,
     history: [],
     fundName: null,
@@ -32,9 +37,10 @@ function safeParseStoredState(value: string | null): CalculatorState | null {
     const parsed = JSON.parse(value) as Partial<CalculatorState>;
     if (!parsed || !Array.isArray(parsed.cashFlows)) return null;
 
+    // Explicitly exclude valuationDate from being restored
     return {
       cashFlows: parsed.cashFlows ?? [],
-      valuationDate: parsed.valuationDate ?? null,
+      valuationDate: getTodayIsoDate(), // Always use today's date, ignore stored value
       currentValue: parsed.currentValue ?? null,
       history: parsed.history ?? [],
       fundName: parsed.fundName ?? null,
@@ -105,6 +111,7 @@ export function useCalculator() {
   }, [state.cashFlows, state.currentValue, state.valuationDate]);
 
   // Autosave: debounce writes to localStorage on state changes.
+  // Note: We still save valuationDate for potential future use, but never restore it
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -252,7 +259,11 @@ export function useCalculator() {
   };
 
   const importScenario = (nextState: CalculatorState): void => {
-    setState(nextState);
+    // When importing, preserve current valuationDate (which is today's date)
+    setState((prev) => ({
+      ...nextState,
+      valuationDate: prev.valuationDate, // Keep the current date, don't import it
+    }));
     setSaveSnapshotResult(null);
   };
 
@@ -268,6 +279,63 @@ export function useCalculator() {
       // Intentionally ignore storage errors in restricted environments
       void 0;
     }
+  };
+
+  const deleteHistorySnapshot = (index: number): void => {
+    setState((prev) => ({
+      ...prev,
+      history: prev.history.filter((_, i) => i !== index),
+    }));
+  };
+
+  const updateHistorySnapshot = (index: number, patch: Partial<Pick<HistoricalSnapshot, 'valuationDate' | 'currentValue'>>): void => {
+    setState((prev) => {
+      const updatedHistory = [...prev.history];
+      const snapshot = updatedHistory[index];
+
+      if (!snapshot) return prev;
+
+      // Create updated snapshot with new values
+      const valuationDate = patch.valuationDate ?? snapshot.valuationDate;
+      const currentValue = patch.currentValue ?? snapshot.currentValue;
+
+      // Recalculate IRR and Simple Rate based on the updated values
+      // We need to get cash flows at the time of this snapshot
+      // Since we don't store historical cash flows per snapshot, we'll use current cash flows
+      const sorted = sortCashFlowsByDate(prev.cashFlows);
+      const net = computeNetInvested(sorted);
+      const profitValue = currentValue - net;
+
+      let irrValue: number | null = null;
+      let simpleRateValue: number | null = null;
+
+      if (sorted.length > 0) {
+        const valuationDateObj = new Date(valuationDate);
+        const irrFlows = mapToIrrCashFlows(sorted, valuationDateObj, currentValue);
+        irrValue = computeIrr(irrFlows);
+
+        simpleRateValue = computeSimpleRate({
+          cashFlows: sorted,
+          valuationDate: valuationDateObj,
+          currentValue,
+        });
+      }
+
+      updatedHistory[index] = {
+        ...snapshot,
+        valuationDate,
+        currentValue,
+        irr: irrValue,
+        simpleRate: simpleRateValue,
+        netInvested: net,
+        profit: profitValue,
+      };
+
+      return {
+        ...prev,
+        history: updatedHistory,
+      };
+    });
   };
 
   return {
@@ -286,5 +354,7 @@ export function useCalculator() {
     saveSnapshot,
     importScenario,
     clearAll,
+    deleteHistorySnapshot,
+    updateHistorySnapshot,
   };
 }

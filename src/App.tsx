@@ -28,6 +28,8 @@ function App() {
     importScenario,
     clearAll,
     setFundName,
+    deleteHistorySnapshot,
+    updateHistorySnapshot,
   } = useCalculator();
 
   return (
@@ -93,7 +95,11 @@ function App() {
 
         {/* Row 3: History Table */}
         <div className="md:col-span-12">
-          <HistoryTable history={state.history} />
+          <HistoryTable
+            history={state.history}
+            onDeleteSnapshot={deleteHistorySnapshot}
+            onUpdateSnapshot={updateHistorySnapshot}
+          />
         </div>
 
         {/* Row 4: History Chart */}
