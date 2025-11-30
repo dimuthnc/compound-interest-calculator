@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { computeNetInvested, sortCashFlowsByDate } from "./cashflow";
-import type { CashFlowEntry } from "../types";
+import { computeNetInvested, sortCashFlowsByDate, computeSnapshotMetrics } from "./cashflow";
+import type { CashFlowEntry, HistoricalSnapshot } from "../types";
 
 const makeEntry = (overrides: Partial<CashFlowEntry>): CashFlowEntry => ({
   id: overrides.id ?? "id",
@@ -45,3 +45,65 @@ describe("computeNetInvested", () => {
   });
 });
 
+describe("computeSnapshotMetrics", () => {
+  it("computes all metrics dynamically from snapshot and cash flows", () => {
+    const cashFlows: CashFlowEntry[] = [
+      makeEntry({ id: "1", date: "2024-01-01", amount: 1000, direction: "deposit" }),
+      makeEntry({ id: "2", date: "2024-06-01", amount: 500, direction: "deposit" }),
+      makeEntry({ id: "3", date: "2024-09-01", amount: 200, direction: "withdrawal" }),
+    ];
+
+    const snapshot: Pick<HistoricalSnapshot, 'valuationDate' | 'currentValue'> = {
+      valuationDate: "2024-12-31",
+      currentValue: 1500,
+    };
+
+    const metrics = computeSnapshotMetrics(snapshot, cashFlows);
+
+    // Net invested: 1000 + 500 - 200 = 1300
+    expect(metrics.netInvested).toBe(1300);
+
+    // Profit: 1500 - 1300 = 200
+    expect(metrics.profit).toBe(200);
+
+    // IRR and simple rate should be computed (non-null for valid inputs)
+    expect(metrics.irr).not.toBeNull();
+    expect(metrics.simpleRate).not.toBeNull();
+
+    // IRR should be a reasonable positive number for this profitable scenario
+    expect(metrics.irr).toBeGreaterThan(0);
+    expect(metrics.simpleRate).toBeGreaterThan(0);
+  });
+
+  it("returns null for IRR and simpleRate when no cash flows exist", () => {
+    const snapshot: Pick<HistoricalSnapshot, 'valuationDate' | 'currentValue'> = {
+      valuationDate: "2024-12-31",
+      currentValue: 1500,
+    };
+
+    const metrics = computeSnapshotMetrics(snapshot, []);
+
+    expect(metrics.netInvested).toBe(0);
+    expect(metrics.profit).toBe(1500);
+    expect(metrics.irr).toBeNull();
+    expect(metrics.simpleRate).toBeNull();
+  });
+
+  it("handles negative profit scenarios", () => {
+    const cashFlows: CashFlowEntry[] = [
+      makeEntry({ id: "1", date: "2024-01-01", amount: 1000, direction: "deposit" }),
+    ];
+
+    const snapshot: Pick<HistoricalSnapshot, 'valuationDate' | 'currentValue'> = {
+      valuationDate: "2024-12-31",
+      currentValue: 800,
+    };
+
+    const metrics = computeSnapshotMetrics(snapshot, cashFlows);
+
+    expect(metrics.netInvested).toBe(1000);
+    expect(metrics.profit).toBe(-200); // Lost money
+    expect(metrics.irr).not.toBeNull();
+    expect(metrics.irr).toBeLessThan(0); // Negative return
+  });
+});

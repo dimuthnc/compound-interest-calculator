@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { useState } from "react";
-import type { HistoricalSnapshot } from "../../types";
+import type { CashFlowEntry, HistoricalSnapshot } from "../../types";
+import { computeSnapshotMetrics } from "../../domain/cashflow";
 import {
   Table,
   TableBody,
@@ -16,13 +17,14 @@ import { Pencil, Trash2, Check, X } from "lucide-react";
 
 export interface HistoryTableProps {
   history: HistoricalSnapshot[];
+  cashFlows: CashFlowEntry[]; // Used to calculate metrics dynamically
   onDeleteSnapshot: (index: number) => void;
   onUpdateSnapshot: (index: number, patch: Partial<Pick<HistoricalSnapshot, 'valuationDate' | 'currentValue'>>) => void;
 }
 
 const DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm";
 
-export function HistoryTable({ history, onDeleteSnapshot, onUpdateSnapshot }: HistoryTableProps) {
+export function HistoryTable({ history, cashFlows, onDeleteSnapshot, onUpdateSnapshot }: HistoryTableProps) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editValues, setEditValues] = useState<{ valuationDate: string; currentValue: string }>({
     valuationDate: '',
@@ -123,7 +125,10 @@ export function HistoryTable({ history, onDeleteSnapshot, onUpdateSnapshot }: Hi
                   const isEditing = editingIndex === index;
                   const calculatedAt = format(new Date(snapshot.calculationDateTime), DATE_TIME_FORMAT);
                   const formatPercent = (value: number | null): string => (value !== null ? `${(value * 100).toFixed(2)}%` : "N/A");
-                  const profitColor = snapshot.profit > 0 ? "text-green-600" : snapshot.profit < 0 ? "text-red-600" : "";
+
+                  // Compute metrics dynamically from current cash flows
+                  const metrics = computeSnapshotMetrics(snapshot, cashFlows);
+                  const profitColor = metrics.profit > 0 ? "text-green-600" : metrics.profit < 0 ? "text-red-600" : "";
 
                   return (
                     <TableRow key={`${snapshot.calculationDateTime}-${index}`}>
@@ -154,12 +159,12 @@ export function HistoryTable({ history, onDeleteSnapshot, onUpdateSnapshot }: Hi
                           snapshot.currentValue.toLocaleString(undefined, { maximumFractionDigits: 2 })
                         )}
                       </TableCell>
-                      <TableCell className="text-right">{snapshot.netInvested.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                      <TableCell className="text-right">{metrics.netInvested.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                       <TableCell className={`text-right font-medium ${profitColor}`}>
-                        {snapshot.profit.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                        {metrics.profit.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                       </TableCell>
-                      <TableCell className="text-right">{formatPercent(snapshot.irr)}</TableCell>
-                      <TableCell className="text-right">{formatPercent(snapshot.simpleRate)}</TableCell>
+                      <TableCell className="text-right">{formatPercent(metrics.irr)}</TableCell>
+                      <TableCell className="text-right">{formatPercent(metrics.simpleRate)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-1 justify-end">
                           {isEditing ? (

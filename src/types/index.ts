@@ -10,11 +10,12 @@ export interface CashFlowEntry {
 export interface HistoricalSnapshot {
   calculationDateTime: string; // ISO datetime, e.g. "2025-11-16T10:15:30Z"
   valuationDate: string; // ISO date used for this calculation
-  currentValue: number; // fund value used at valuationDate
-  irr: number | null; // e.g. 0.1397 (13.97%), null if not computable
-  simpleRate: number | null; // e.g. 0.1486, null if not computable
-  netInvested: number; // sum of deposits - sum of withdrawals
-  profit: number; // currentValue - netInvested
+  currentValue: number; // fund value used at valuation// Legacy fields for backward compatibility when reading old files
+  // These should NOT be written to new exports
+  irr?: number | null; // DEPRECATED: Calculated dynamically
+  simpleRate?: number | null; // DEPRECATED: Calculated dynamically
+  netInvested?: number; // DEPRECATED: Calculated dynamically
+  profit?: number; // DEPRECATED: Calculated dynamically
 }
 
 export interface CalculatorState {

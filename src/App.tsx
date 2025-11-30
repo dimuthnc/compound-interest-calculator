@@ -97,6 +97,7 @@ function App() {
         <div className="md:col-span-12">
           <HistoryTable
             history={state.history}
+            cashFlows={state.cashFlows}
             onDeleteSnapshot={deleteHistorySnapshot}
             onUpdateSnapshot={updateHistorySnapshot}
           />
@@ -104,7 +105,7 @@ function App() {
 
         {/* Row 4: History Chart */}
         <div className="md:col-span-12">
-          <HistoryChart history={state.history} />
+          <HistoryChart history={state.history} cashFlows={state.cashFlows} />
         </div>
       </div>
     </Layout>

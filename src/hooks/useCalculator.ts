@@ -221,31 +221,14 @@ export function useCalculator() {
       return result;
     }
 
-    const valuationDate = new Date(state.valuationDate);
-    const currentValue = state.currentValue;
-
-    const irrFlows = mapToIrrCashFlows(sorted, valuationDate, currentValue);
-    const irrValue = computeIrr(irrFlows);
-
-    const simpleRateValue = computeSimpleRate({
-      cashFlows: sorted,
-      valuationDate,
-      currentValue,
-    });
-
-    const net = computeNetInvested(sorted);
-    const profitValue = currentValue - net;
-
     const calculationDateTime = new Date().toISOString();
 
-    const snapshot = {
+    // Only store valuationDate and currentValue
+    // Calculated fields (irr, simpleRate, netInvested, profit) will be computed dynamically
+    const snapshot: HistoricalSnapshot = {
       calculationDateTime,
       valuationDate: state.valuationDate,
-      currentValue,
-      irr: irrValue,
-      simpleRate: simpleRateValue,
-      netInvested: net,
-      profit: profitValue,
+      currentValue: state.currentValue,
     };
 
     setState((prev) => ({
@@ -295,40 +278,17 @@ export function useCalculator() {
 
       if (!snapshot) return prev;
 
-      // Create updated snapshot with new values
-      const valuationDate = patch.valuationDate ?? snapshot.valuationDate;
-      const currentValue = patch.currentValue ?? snapshot.currentValue;
-
-      // Recalculate IRR and Simple Rate based on the updated values
-      // We need to get cash flows at the time of this snapshot
-      // Since we don't store historical cash flows per snapshot, we'll use current cash flows
-      const sorted = sortCashFlowsByDate(prev.cashFlows);
-      const net = computeNetInvested(sorted);
-      const profitValue = currentValue - net;
-
-      let irrValue: number | null = null;
-      let simpleRateValue: number | null = null;
-
-      if (sorted.length > 0) {
-        const valuationDateObj = new Date(valuationDate);
-        const irrFlows = mapToIrrCashFlows(sorted, valuationDateObj, currentValue);
-        irrValue = computeIrr(irrFlows);
-
-        simpleRateValue = computeSimpleRate({
-          cashFlows: sorted,
-          valuationDate: valuationDateObj,
-          currentValue,
-        });
-      }
-
+      // Only update and store valuationDate and currentValue
+      // Calculated fields will be computed dynamically when needed
       updatedHistory[index] = {
         ...snapshot,
-        valuationDate,
-        currentValue,
-        irr: irrValue,
-        simpleRate: simpleRateValue,
-        netInvested: net,
-        profit: profitValue,
+        valuationDate: patch.valuationDate ?? snapshot.valuationDate,
+        currentValue: patch.currentValue ?? snapshot.currentValue,
+        // Remove any legacy calculated fields
+        irr: undefined,
+        simpleRate: undefined,
+        netInvested: undefined,
+        profit: undefined,
       };
 
       return {

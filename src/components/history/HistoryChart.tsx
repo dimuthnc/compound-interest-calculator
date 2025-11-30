@@ -11,7 +11,8 @@ import {
 import 'chartjs-adapter-date-fns';
 import type { TooltipItem } from "chart.js";
 import { Line } from "react-chartjs-2";
-import type { HistoricalSnapshot } from "../../types";
+import type { CashFlowEntry, HistoricalSnapshot } from "../../types";
+import { computeSnapshotMetrics } from "../../domain/cashflow";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 // Register Chart.js components once for this module.
@@ -27,9 +28,10 @@ ChartJS.register(
 
 export interface HistoryChartProps {
   history: HistoricalSnapshot[];
+  cashFlows: CashFlowEntry[]; // Used to calculate metrics dynamically
 }
 
-export function HistoryChart({ history }: HistoryChartProps) {
+export function HistoryChart({ history, cashFlows }: HistoryChartProps) {
   if (history.length < 2) {
     return (
       <div className="mt-2 rounded-lg border border-blue-300 bg-blue-50 p-4 text-sm text-blue-800">
@@ -44,10 +46,16 @@ export function HistoryChart({ history }: HistoryChartProps) {
 
   const labels = sorted.map((s) => s.valuationDate);
 
-  const irrData = sorted.map((s) => (s.irr !== null ? s.irr * 100 : null));
-  const simpleRateData = sorted.map((s) =>
-    s.simpleRate !== null ? s.simpleRate * 100 : null,
-  );
+  // Compute metrics dynamically for each snapshot
+  const irrData = sorted.map((s) => {
+    const metrics = computeSnapshotMetrics(s, cashFlows);
+    return metrics.irr !== null ? metrics.irr * 100 : null;
+  });
+
+  const simpleRateData = sorted.map((s) => {
+    const metrics = computeSnapshotMetrics(s, cashFlows);
+    return metrics.simpleRate !== null ? metrics.simpleRate * 100 : null;
+  });
 
   const data = {
     labels,
