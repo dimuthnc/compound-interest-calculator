@@ -33,7 +33,7 @@ export function CashFlowRow({ entry, onUpdate, onDelete }: CashFlowRowProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-12 sm:gap-3 items-center">
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-12 sm:gap-3 items-center" data-testid="cash-flow-row">
       <div className="sm:col-span-4">
         <Input
           type="date"
