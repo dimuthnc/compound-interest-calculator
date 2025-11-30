@@ -48,7 +48,7 @@ export async function getIRR(page: Page): Promise<string> {
     const element = page.locator('text=IRR').locator('..').first().locator('div').last();
     const text = await element.textContent({ timeout: 5000 });
     return text || '';
-  } catch (error) {
+  } catch {
     return '';
   }
 }
@@ -61,7 +61,7 @@ export async function getSimpleRate(page: Page): Promise<string> {
     const element = page.locator('text=Simple Annual Rate').locator('..').first().locator('div').last();
     const text = await element.textContent({ timeout: 5000 });
     return text || '';
-  } catch (error) {
+  } catch {
     return '';
   }
 }

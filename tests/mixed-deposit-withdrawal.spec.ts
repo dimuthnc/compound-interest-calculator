@@ -98,7 +98,6 @@ test.describe('Scenario 3 - Deposit and Withdrawal Pattern', () => {
   });
 
   test('Verify calculations update dynamically', async ({ page }) => {
-    const scenario = mixedDepositWithdrawal;
 
     await test.step('Add initial cash flows', async () => {
       await addCashFlow(page, '2024-01-01', 1000, 'Deposit');

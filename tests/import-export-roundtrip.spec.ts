@@ -1,4 +1,4 @@
-import { test, expect, Download } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { clearLocalStorage } from './utils/localStorage';
 import { addCashFlow, getCashFlowCount } from './utils/cashflow-helpers';
 import { setValuationDate, setCurrentValue, saveSnapshot } from './utils/calculation-helpers';

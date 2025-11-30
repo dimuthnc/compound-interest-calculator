@@ -101,7 +101,6 @@ test.describe('LocalStorage Autosave', () => {
     await test.step('Verify UI is cleared', async () => {
       await expect(page.getByText(/add at least one deposit to start/i)).toBeVisible();
 
-      const valuationDateInput = page.getByLabel(/valuation date/i);
       const currentValueInput = page.getByLabel(/current.*value|current fund value/i);
 
       const currentValue = await currentValueInput.inputValue();
