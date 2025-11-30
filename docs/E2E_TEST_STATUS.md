@@ -5,6 +5,7 @@
 - **Passing**: 40 tests (100%) ✅
 - **Failing**: 0 tests
 - **Improvement**: +100% from initial 62.5% → Full coverage achieved!
+- **CI/CD**: ✅ Integrated with GitHub Actions (runs on all PRs and pushes)
 
 ## ✅ All Test Files Passing (9/9)
 
@@ -222,4 +223,47 @@ The three failing tests were fixed by:
 3. **Restoring valuation date** in import/export round-trip
 
 All fixes maintain consistency with the product requirements and architectural decisions outlined in the project documentation.
+
+## CI/CD Integration ✅
+
+The E2E tests are now fully integrated into the GitHub Actions CI/CD pipeline:
+
+### Workflow Configuration
+- **File**: `.github/workflows/ci.yml`
+- **Job Name**: `e2e-tests`
+- **Trigger**: Runs on all pushes to `main` and `feature/*` branches, plus all pull requests
+- **Dependencies**: Runs after the `build-and-test` job completes successfully
+
+### Test Execution
+- **Browsers**: Tests run in parallel across 3 browsers:
+  - ✅ Chromium (Desktop Chrome)
+  - ✅ Firefox (Desktop Firefox)
+  - ✅ WebKit (Desktop Safari)
+- **Timeout**: 15 minutes per browser
+- **Workers**: 1 worker on CI (sequential execution for stability)
+- **Retries**: 2 retries on failure (configured in `playwright.config.ts`)
+
+### Artifacts on Failure
+When tests fail, the following artifacts are automatically uploaded:
+- **Playwright HTML Report**: Interactive test results with traces
+- **Test Results**: Screenshots, videos, and error contexts
+- **Retention**: 7 days
+
+### Benefits
+1. **Early Detection**: Catch regressions before merge
+2. **Cross-Browser Coverage**: Ensures compatibility with all major browsers
+3. **Debugging Support**: Full traces, screenshots, and videos on failure
+4. **Blocking PRs**: Failed tests prevent merging broken code
+
+### Running Locally
+```bash
+# Run all tests (all browsers)
+npm run test:e2e
+
+# Run specific browser
+npx playwright test --project=chromium
+
+# Run with UI mode for debugging
+npm run test:e2e:ui
+```
 

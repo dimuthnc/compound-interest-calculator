@@ -205,3 +205,37 @@ All E2E tests are now passing. The three fixes addressed:
 
 These fixes maintain architectural consistency and align with the product requirements for a client-side calculator with full import/export capabilities.
 
+---
+
+## CI/CD Integration ✅
+
+The E2E tests are now fully integrated into the GitHub Actions CI/CD pipeline.
+
+### Workflow Configuration
+- **File**: `.github/workflows/ci.yml`
+- **Job**: `e2e-tests` (runs after successful build)
+- **Browsers**: Chromium, Firefox, WebKit (parallel execution)
+- **Trigger**: All pushes and pull requests
+- **Duration**: ~5-8 minutes per browser
+
+### Key Features
+- ✅ **Automatic test execution** on every PR and push
+- ✅ **Multi-browser testing** (3 browsers in parallel)
+- ✅ **Retry on failure** (2 retries for stability)
+- ✅ **Artifact collection** (screenshots, videos, traces on failure)
+- ✅ **7-day retention** of test artifacts for debugging
+
+### Benefits
+1. **Early Detection**: Catch regressions before merge
+2. **Cross-Browser Validation**: Ensures compatibility
+3. **Blocking PRs**: Failed tests prevent merging broken code
+4. **Debug Support**: Full traces available for failed tests
+
+### Documentation
+See [CI/CD Setup Documentation](./CI_CD_SETUP.md) for complete details on:
+- Pipeline structure
+- Running tests locally
+- Viewing artifacts
+- Troubleshooting
+- Adding new tests
+
