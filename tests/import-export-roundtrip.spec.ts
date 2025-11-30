@@ -5,6 +5,7 @@ import { setValuationDate, setCurrentValue, saveSnapshot } from './utils/calcula
 import { complexMultiYear } from './utils/test-data';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 
 test.describe('Scenario 5 - Import/Export Round-Trip', () => {
   test.beforeEach(async ({ page }) => {
@@ -21,26 +22,25 @@ test.describe('Scenario 5 - Import/Export Round-Trip', () => {
       for (const cf of scenario.cashFlows) {
         await addCashFlow(page, cf.date, cf.amount, cf.direction);
       }
-      await page.waitForTimeout(500);
+      // Verify all cash flows were added
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(scenario.cashFlows.length);
     });
 
     await test.step('Set valuation and save first snapshot', async () => {
       await setValuationDate(page, scenario.valuationDate);
       await setCurrentValue(page, scenario.currentValue);
-      await page.waitForTimeout(500);
       await saveSnapshot(page);
-      await page.waitForTimeout(500);
+      // Verify first snapshot was created
+      const historyRows = page.locator('table tbody tr');
+      await expect(historyRows).toHaveCount(1);
     });
 
     await test.step('Update valuation and save second snapshot', async () => {
       await setValuationDate(page, '2025-06-01');
       await setCurrentValue(page, 15000);
-      await page.waitForTimeout(500);
       await saveSnapshot(page);
-      await page.waitForTimeout(500);
-    });
-
-    await test.step('Verify we have 2 snapshots', async () => {
+      // Verify second snapshot was created
       const historyRows = page.locator('table tbody tr');
       await expect(historyRows).toHaveCount(2);
     });
@@ -54,7 +54,7 @@ test.describe('Scenario 5 - Import/Export Round-Trip', () => {
       const download = await downloadPromise;
 
       // Save the download to a temp file
-      const tmpDir = '/tmp/playwright-test-downloads';
+      const tmpDir = path.join(os.tmpdir(), 'playwright-test-downloads');
       if (!fs.existsSync(tmpDir)) {
         fs.mkdirSync(tmpDir, { recursive: true });
       }
@@ -103,8 +103,9 @@ test.describe('Scenario 5 - Import/Export Round-Trip', () => {
       const fileInput = page.locator('input[type="file"]');
       await fileInput.setInputFiles(downloadedFilePath);
 
-      // Wait for import to complete
-      await page.waitForTimeout(1000);
+      // Wait for import to complete by checking that cash flows are visible
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows.first()).toBeVisible();
     });
 
     await test.step('Verify cash flows are restored', async () => {
@@ -150,7 +151,7 @@ test.describe('Scenario 5 - Import/Export Round-Trip', () => {
 
   test('Import invalid JSON shows error', async ({ page }) => {
     await test.step('Create invalid JSON file', async () => {
-      const tmpDir = '/tmp/playwright-test-downloads';
+      const tmpDir = path.join(os.tmpdir(), 'playwright-test-downloads');
       if (!fs.existsSync(tmpDir)) {
         fs.mkdirSync(tmpDir, { recursive: true });
       }
@@ -163,8 +164,6 @@ test.describe('Scenario 5 - Import/Export Round-Trip', () => {
 
       const fileInput = page.locator('input[type="file"]');
       await fileInput.setInputFiles(invalidJsonPath);
-
-      await page.waitForTimeout(1000);
 
       // Should show error message in the red error box
       const errorBox = page.locator('.border-red-300.bg-red-50');
@@ -181,7 +180,10 @@ test.describe('Scenario 5 - Import/Export Round-Trip', () => {
 
     await test.step('Add cash flow and set fund name', async () => {
       await addCashFlow(page, '2024-01-01', 1000, 'Deposit');
-      await page.waitForTimeout(500);
+
+      // Wait for the cash flow to appear
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(1);
 
       // Set fund name if the input exists
       const fundNameInput = page.getByLabel(/fund name/i);
@@ -191,7 +193,6 @@ test.describe('Scenario 5 - Import/Export Round-Trip', () => {
 
       await setValuationDate(page, '2025-01-01');
       await setCurrentValue(page, 1100);
-      await page.waitForTimeout(500);
     });
 
     await test.step('Export and verify fund name in JSON', async () => {
@@ -202,7 +203,7 @@ test.describe('Scenario 5 - Import/Export Round-Trip', () => {
 
       const download = await downloadPromise;
 
-      const tmpDir = '/tmp/playwright-test-downloads';
+      const tmpDir = path.join(os.tmpdir(), 'playwright-test-downloads');
       if (!fs.existsSync(tmpDir)) {
         fs.mkdirSync(tmpDir, { recursive: true });
       }

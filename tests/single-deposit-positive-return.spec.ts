@@ -40,9 +40,6 @@ test.describe('Scenario 2 - Single Deposit and Current Value', () => {
     await test.step('Set valuation date and current value', async () => {
       await setValuationDate(page, scenario.valuationDate);
       await setCurrentValue(page, scenario.currentValue);
-
-      // Wait a moment for calculations to update
-      await page.waitForTimeout(500);
     });
 
     await test.step('Verify Results panel shows correct calculations', async () => {
@@ -78,8 +75,9 @@ test.describe('Scenario 2 - Single Deposit and Current Value', () => {
     await test.step('Click Calculate & save snapshot', async () => {
       await saveSnapshot(page);
 
-      // Wait for snapshot to be saved
-      await page.waitForTimeout(500);
+      // Verify snapshot was saved
+      const historyRows = page.locator('table tbody tr');
+      await expect(historyRows).toHaveCount(1);
     });
 
     await test.step('Verify History table has one row', async () => {
@@ -109,18 +107,20 @@ test.describe('Scenario 2 - Single Deposit and Current Value', () => {
       );
       await setValuationDate(page, scenario.valuationDate);
       await setCurrentValue(page, scenario.currentValue);
-      await page.waitForTimeout(500);
       await saveSnapshot(page);
-      await page.waitForTimeout(500);
+      // Verify first snapshot was saved
+      const historyRows = page.locator('table tbody tr');
+      await expect(historyRows).toHaveCount(1);
     });
 
     await test.step('Update valuation and add second snapshot', async () => {
       // Change valuation date and value for second snapshot
       await setValuationDate(page, '2025-06-01');
       await setCurrentValue(page, 1150);
-      await page.waitForTimeout(500);
       await saveSnapshot(page);
-      await page.waitForTimeout(500);
+      // Verify second snapshot was saved
+      const historyRows = page.locator('table tbody tr');
+      await expect(historyRows).toHaveCount(2);
     });
 
     await test.step('Verify chart is now visible', async () => {

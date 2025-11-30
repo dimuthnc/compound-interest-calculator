@@ -15,9 +15,10 @@ test.describe('History Snapshot Edit and Delete', () => {
       await addCashFlow(page, '2024-01-01', 1000, 'Deposit');
       await setValuationDate(page, '2025-01-01');
       await setCurrentValue(page, 1100);
-      await page.waitForTimeout(500);
       await saveSnapshot(page);
-      await page.waitForTimeout(500);
+      // Verify snapshot was created
+      const historyRows = page.locator('table tbody tr');
+      await expect(historyRows).toHaveCount(1);
     });
 
     await test.step('Verify snapshot exists', async () => {
@@ -30,7 +31,8 @@ test.describe('History Snapshot Edit and Delete', () => {
     await test.step('Click edit button on snapshot', async () => {
       const editButton = page.locator('table tbody tr').first().getByRole('button', { name: /edit/i });
       await editButton.click();
-      await page.waitForTimeout(300);
+      // Wait for edit mode input to appear
+      await expect(page.locator('table tbody tr').first().locator('input[type="date"]')).toBeVisible();
     });
 
     await test.step('Update valuation date in edit mode', async () => {
@@ -48,7 +50,8 @@ test.describe('History Snapshot Edit and Delete', () => {
     await test.step('Save the edit', async () => {
       const saveButton = page.locator('table tbody tr').first().getByRole('button', { name: /save|check/i });
       await saveButton.click();
-      await page.waitForTimeout(500);
+      // Wait for edit mode to close
+      await expect(page.locator('table tbody tr').first().locator('input[type="date"]')).not.toBeVisible();
     });
 
     await test.step('Verify snapshot is updated with recalculated values', async () => {
@@ -69,15 +72,16 @@ test.describe('History Snapshot Edit and Delete', () => {
       await addCashFlow(page, '2024-01-01', 1000, 'Deposit');
       await setValuationDate(page, '2025-01-01');
       await setCurrentValue(page, 1100);
-      await page.waitForTimeout(500);
       await saveSnapshot(page);
-      await page.waitForTimeout(500);
+      // Verify snapshot was created
+      const historyRows = page.locator('table tbody tr');
+      await expect(historyRows).toHaveCount(1);
     });
 
     await test.step('Enter edit mode', async () => {
       const editButton = page.locator('table tbody tr').first().getByRole('button', { name: /edit/i });
       await editButton.click();
-      await page.waitForTimeout(300);
+      await expect(page.locator('table tbody tr').first().locator('input[type="number"]')).toBeVisible();
     });
 
     await test.step('Change values', async () => {
@@ -89,7 +93,6 @@ test.describe('History Snapshot Edit and Delete', () => {
     await test.step('Cancel the edit', async () => {
       const cancelButton = page.locator('table tbody tr').first().getByRole('button', { name: /cancel|x/i });
       await cancelButton.click();
-      await page.waitForTimeout(300);
     });
 
     await test.step('Verify original values are restored', async () => {
@@ -106,23 +109,23 @@ test.describe('History Snapshot Edit and Delete', () => {
       // First snapshot
       await setValuationDate(page, '2025-01-01');
       await setCurrentValue(page, 1100);
-      await page.waitForTimeout(500);
       await saveSnapshot(page);
-      await page.waitForTimeout(500);
+      const historyRows1 = page.locator('table tbody tr');
+      await expect(historyRows1).toHaveCount(1);
 
       // Second snapshot
       await setValuationDate(page, '2025-06-01');
       await setCurrentValue(page, 1150);
-      await page.waitForTimeout(500);
       await saveSnapshot(page);
-      await page.waitForTimeout(500);
+      const historyRows2 = page.locator('table tbody tr');
+      await expect(historyRows2).toHaveCount(2);
 
       // Third snapshot
       await setValuationDate(page, '2025-12-01');
       await setCurrentValue(page, 1200);
-      await page.waitForTimeout(500);
       await saveSnapshot(page);
-      await page.waitForTimeout(500);
+      const historyRows3 = page.locator('table tbody tr');
+      await expect(historyRows3).toHaveCount(3);
     });
 
     await test.step('Verify 3 snapshots exist', async () => {
@@ -133,18 +136,17 @@ test.describe('History Snapshot Edit and Delete', () => {
     await test.step('Click delete button on second snapshot', async () => {
       const deleteButton = page.locator('table tbody tr').nth(1).getByRole('button', { name: /delete|trash/i });
       await deleteButton.click();
-      await page.waitForTimeout(300);
+      // Wait for modal to appear
+      await expect(page.getByText(/confirm delete/i)).toBeVisible();
     });
 
     await test.step('Confirm deletion in modal', async () => {
       // Modal should appear with confirmation
-      await expect(page.getByText(/confirm delete/i)).toBeVisible();
       await expect(page.getByText(/are you sure/i)).toBeVisible();
 
       // Click the Delete button in the modal (not Cancel)
       const confirmButton = page.getByRole('button', { name: /^delete$/i }).last();
       await confirmButton.click();
-      await page.waitForTimeout(500);
     });
 
     await test.step('Verify snapshot count decreased to 2', async () => {
@@ -172,21 +174,20 @@ test.describe('History Snapshot Edit and Delete', () => {
       await addCashFlow(page, '2024-01-01', 1000, 'Deposit');
       await setValuationDate(page, '2025-01-01');
       await setCurrentValue(page, 1100);
-      await page.waitForTimeout(500);
       await saveSnapshot(page);
-      await page.waitForTimeout(500);
+      // Verify snapshot was created
+      const historyRows = page.locator('table tbody tr');
+      await expect(historyRows).toHaveCount(1);
     });
 
     await test.step('Delete the snapshot', async () => {
       const deleteButton = page.locator('table tbody tr').first().getByRole('button', { name: /delete|trash/i });
       await deleteButton.click();
-      await page.waitForTimeout(300);
 
       // Confirm in modal
       await expect(page.getByText(/confirm delete/i)).toBeVisible();
       const confirmButton = page.getByRole('button', { name: /^delete$/i }).last();
       await confirmButton.click();
-      await page.waitForTimeout(500);
     });
 
     await test.step('Verify empty state is shown', async () => {
@@ -210,15 +211,16 @@ test.describe('History Snapshot Edit and Delete', () => {
       await addCashFlow(page, '2024-01-01', 1000, 'Deposit');
       await setValuationDate(page, '2025-01-01');
       await setCurrentValue(page, 1100);
-      await page.waitForTimeout(500);
       await saveSnapshot(page);
-      await page.waitForTimeout(500);
+      // Verify snapshot was created
+      const historyRows = page.locator('table tbody tr');
+      await expect(historyRows).toHaveCount(1);
     });
 
     await test.step('Enter edit mode', async () => {
       const editButton = page.locator('table tbody tr').first().getByRole('button', { name: /edit/i });
       await editButton.click();
-      await page.waitForTimeout(300);
+      await expect(page.locator('table tbody tr').first().locator('input[type="number"]')).toBeVisible();
     });
 
     await test.step('Enter invalid current value (negative)', async () => {
@@ -230,7 +232,6 @@ test.describe('History Snapshot Edit and Delete', () => {
     await test.step('Attempt to save', async () => {
       const saveButton = page.locator('table tbody tr').first().getByRole('button', { name: /save|check/i });
       await saveButton.click();
-      await page.waitForTimeout(300);
     });
 
     await test.step('Verify error message or value is not saved', async () => {

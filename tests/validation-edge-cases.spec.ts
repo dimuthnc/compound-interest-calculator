@@ -19,8 +19,7 @@ test.describe('Validation and Edge Cases', () => {
       const isDisabled = await saveButton.isDisabled().catch(() => false);
 
       if (!isDisabled) {
-        await saveButton.click({ force: true });
-        await page.waitForTimeout(500);
+        await saveButton.click();
       }
     });
 
@@ -34,13 +33,14 @@ test.describe('Validation and Edge Cases', () => {
       await addCashFlow(page, '2024-01-01', 1000, 'Deposit');
       await setValuationDate(page, '2025-01-01');
       // Don't set current value
-      await page.waitForTimeout(500);
+      // Wait for the cash flow row to be visible to confirm it was added
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(1);
     });
 
     await test.step('Attempt to save snapshot', async () => {
       const saveButton = page.getByRole('button', { name: /save.*snapshot/i });
-      await saveButton.click({ force: true });
-      await page.waitForTimeout(500);
+      await saveButton.click();
     });
 
     await test.step('Verify no snapshot was created', async () => {
@@ -51,7 +51,8 @@ test.describe('Validation and Edge Cases', () => {
   test('Handle negative amounts gracefully', async ({ page }) => {
     await test.step('Add cash flow with positive amount', async () => {
       await addCashFlow(page, '2024-01-01', 1000, 'Deposit');
-      await page.waitForTimeout(300);
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(1);
     });
 
     await test.step('Try to enter negative amount', async () => {
@@ -61,7 +62,6 @@ test.describe('Validation and Edge Cases', () => {
       await amountInput.clear();
       await amountInput.fill('-500');
       await amountInput.blur();
-      await page.waitForTimeout(300);
     });
 
     await test.step('Verify app handles it gracefully', async () => {
@@ -89,7 +89,6 @@ test.describe('Validation and Edge Cases', () => {
       await addCashFlow(page, '2024-01-01', 1000, 'Deposit');
       await setValuationDate(page, '2025-01-01');
       await setCurrentValue(page, 0);
-      await page.waitForTimeout(500);
     });
 
     await test.step('Verify results handle zero gracefully', async () => {
@@ -107,7 +106,8 @@ test.describe('Validation and Edge Cases', () => {
   test('Handle invalid date formats', async ({ page }) => {
     await test.step('Add cash flow with valid date first', async () => {
       await addCashFlow(page, '2024-01-01', 1000, 'Deposit');
-      await page.waitForTimeout(300);
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(1);
     });
 
     await test.step('Verify date input validates format', async () => {
@@ -121,7 +121,6 @@ test.describe('Validation and Edge Cases', () => {
       // Try to clear the date - HTML5 will handle it
       await dateInput.clear();
       await dateInput.blur();
-      await page.waitForTimeout(300);
 
       const valueAfterClear = await dateInput.inputValue();
       // HTML5 date input behavior: empty string when cleared
@@ -134,10 +133,9 @@ test.describe('Validation and Edge Cases', () => {
       // Try to set a valid date again to verify input still works
       await dateInput.fill('2024-06-15');
       await dateInput.blur();
-      await page.waitForTimeout(300);
 
-      const finalValue = await dateInput.inputValue();
-      expect(finalValue).toBe('2024-06-15');
+      // Verify the date was set correctly
+      await expect(dateInput).toHaveValue('2024-06-15');
     });
   });
 
@@ -148,7 +146,6 @@ test.describe('Validation and Edge Cases', () => {
       await addCashFlow(page, scenario.cashFlows[0].date, scenario.cashFlows[0].amount, scenario.cashFlows[0].direction);
       await setValuationDate(page, scenario.valuationDate);
       await setCurrentValue(page, scenario.currentValue);
-      await page.waitForTimeout(500);
     });
 
     await test.step('Verify calculations work with large numbers', async () => {
@@ -161,7 +158,6 @@ test.describe('Validation and Edge Cases', () => {
 
     await test.step('Save snapshot and verify', async () => {
       await saveSnapshot(page);
-      await page.waitForTimeout(500);
 
       const historyRows = page.locator('table tbody tr');
       await expect(historyRows).toHaveCount(1);
@@ -178,7 +174,6 @@ test.describe('Validation and Edge Cases', () => {
       }
       await setValuationDate(page, scenario.valuationDate);
       await setCurrentValue(page, scenario.currentValue);
-      await page.waitForTimeout(500);
     });
 
     await test.step('Verify calculations handle decimals', async () => {
@@ -193,13 +188,13 @@ test.describe('Validation and Edge Cases', () => {
   test('Handle valuation date before cash flows', async ({ page }) => {
     await test.step('Add cash flow in 2024', async () => {
       await addCashFlow(page, '2024-06-01', 1000, 'Deposit');
-      await page.waitForTimeout(300);
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(1);
     });
 
     await test.step('Set valuation date before cash flow', async () => {
       await setValuationDate(page, '2024-01-01');
       await setCurrentValue(page, 1000);
-      await page.waitForTimeout(500);
     });
 
     await test.step('Verify app handles gracefully', async () => {
@@ -215,13 +210,13 @@ test.describe('Validation and Edge Cases', () => {
       await addCashFlow(page, '2024-01-01', 1000, 'Deposit');
       await addCashFlow(page, '2024-01-01', 500, 'Deposit');
       await addCashFlow(page, '2024-01-01', 200, 'Withdrawal');
-      await page.waitForTimeout(500);
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(3);
     });
 
     await test.step('Set valuation and verify calculations', async () => {
       await setValuationDate(page, '2025-01-01');
       await setCurrentValue(page, 1500);
-      await page.waitForTimeout(500);
 
       // Net invested should be 1000 + 500 - 200 = 1300
       const netInvestedSection = page.locator('text=Net Invested').locator('..');
@@ -237,7 +232,6 @@ test.describe('Validation and Edge Cases', () => {
       const amountInput = rows.first().getByLabel(/amount/i);
       await amountInput.clear();
       await amountInput.blur();
-      await page.waitForTimeout(300);
     });
 
     await test.step('Verify app handles empty amount', async () => {
@@ -252,7 +246,6 @@ test.describe('Validation and Edge Cases', () => {
       await addCashFlow(page, '2030-01-01', 1000, 'Deposit');
       await setValuationDate(page, '2035-01-01');
       await setCurrentValue(page, 1500);
-      await page.waitForTimeout(500);
     });
 
     await test.step('Verify calculations work with future dates', async () => {
@@ -271,7 +264,8 @@ test.describe('Validation and Edge Cases', () => {
       await addCashFlow(page, '2024-01-01', 1000, 'Deposit');
       await setValuationDate(page, '2025-01-01');
       await setCurrentValue(page, 1100);
-      await page.waitForTimeout(300);
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(1);
     });
 
     await test.step('Rapidly click save snapshot multiple times', async () => {
@@ -281,11 +275,12 @@ test.describe('Validation and Edge Cases', () => {
       await saveButton.click();
       await saveButton.click();
       await saveButton.click();
-      await page.waitForTimeout(500);
     });
 
     await test.step('Verify snapshots were created', async () => {
       const historyRows = page.locator('table tbody tr');
+      // Wait for at least one row to be visible before counting
+      await expect(historyRows.first()).toBeVisible();
       const count = await historyRows.count();
 
       // Should have at least 1 snapshot (might have 3 if debounce allows)

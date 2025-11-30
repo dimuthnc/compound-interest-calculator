@@ -26,15 +26,15 @@ test.describe('Scenario 4 - Same-Sign Cash Flows (IRR Not Defined)', () => {
     await test.step('Add cash flows with same direction', async () => {
       for (const cf of scenario.cashFlows) {
         await addCashFlow(page, cf.date, cf.amount, cf.direction);
-        await page.waitForTimeout(300);
       }
-      await page.waitForTimeout(500);
+      // Verify all cash flows were added
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(scenario.cashFlows.length);
     });
 
     await test.step('Set valuation date and current value', async () => {
       await setValuationDate(page, scenario.valuationDate);
       await setCurrentValue(page, scenario.currentValue);
-      await page.waitForTimeout(500);
     });
 
     await test.step('Verify net invested equals current value', async () => {
@@ -88,7 +88,9 @@ test.describe('Scenario 4 - Same-Sign Cash Flows (IRR Not Defined)', () => {
     await test.step('Add only withdrawal cash flows', async () => {
       await addCashFlow(page, '2024-01-01', 1000, 'Withdrawal');
       await addCashFlow(page, '2024-06-01', 500, 'Withdrawal');
-      await page.waitForTimeout(500);
+      // Verify cash flows were added
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(2);
     });
 
     await test.step('Set valuation date and current value', async () => {
@@ -96,7 +98,6 @@ test.describe('Scenario 4 - Same-Sign Cash Flows (IRR Not Defined)', () => {
       // This is an edge case that should still handle gracefully
       await setValuationDate(page, '2024-12-31');
       await setCurrentValue(page, 100); // Arbitrary positive value
-      await page.waitForTimeout(500);
     });
 
     await test.step('Verify IRR shows N/A', async () => {
@@ -113,13 +114,14 @@ test.describe('Scenario 4 - Same-Sign Cash Flows (IRR Not Defined)', () => {
   test('Single deposit only - IRR should be calculable', async ({ page }) => {
     await test.step('Add single deposit', async () => {
       await addCashFlow(page, '2024-01-01', 1000, 'Deposit');
-      await page.waitForTimeout(500);
+      // Verify cash flow was added
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(1);
     });
 
     await test.step('Set valuation with positive return', async () => {
       await setValuationDate(page, '2025-01-01');
       await setCurrentValue(page, 1100);
-      await page.waitForTimeout(500);
     });
 
     await test.step('Verify IRR is calculable (not N/A)', async () => {
