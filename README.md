@@ -1,5 +1,7 @@
 # Effective Interest Rate Calculator for Funds
 
+[![CI](https://github.com/dimuthnc/compound-interest-calculator/actions/workflows/ci.yml/badge.svg)](https://github.com/dimuthnc/compound-interest-calculator/actions/workflows/ci.yml)
+
 A purely client-side, browser-based calculator for **money-weighted returns** on fund/ETF investments with **irregular cash flows**.
 
 The app lets you:
@@ -306,13 +308,38 @@ Then open the printed URL in your browser (typically `http://localhost:5173`).
 
 ### Running Tests
 
-If tests are configured via Vitest:
+**Unit Tests** (Vitest):
 
 ```bash
 npm test
-# or
-npm run test
+# or for a single run:
+npm test -- --run
 ```
+
+**E2E Tests** (Playwright):
+
+```bash
+# Run all E2E tests (all browsers)
+npm run test:e2e
+
+# Run specific browser
+npx playwright test --project=chromium
+npx playwright test --project=firefox
+npx playwright test --project=webkit
+
+# Run with UI mode for debugging
+npm run test:e2e:ui
+
+# View last test report
+npm run test:e2e:report
+```
+
+**Test Coverage**:
+- ✅ 40 E2E tests across 9 test suites (100% passing)
+- ✅ Runs automatically on CI for all PRs and pushes
+- ✅ Tests on Chromium, Firefox, and WebKit
+
+See [CI/CD Setup Documentation](./docs/CI_CD_SETUP.md) for details.
 
 ### Building for Production
 
@@ -664,7 +691,7 @@ Planned or potential future enhancements (from the PRD):
 ---
 
 For details on how to contribute and the branching model, see
-[Git Branching & Contribution Workflow](CONTRIBUTING.md).
+[Git Branching & Contribution Workflow](./docs/CONTRIBUTING.md).
 
 
 If you have suggestions, bug reports, or feature ideas, feel free to open an issue or a pull request.

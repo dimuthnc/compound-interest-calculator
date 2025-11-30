@@ -60,9 +60,6 @@ function generateId(): string {
  *
  * Performs shallow shape checks and returns an Error with a helpful message
  * if the structure does not match the expected ExportedScenarioJson shape.
- *
- * Note: valuationDate is intentionally NOT restored from import - it will be
- * set to today's date by the hook/component.
  */
 export function parseImportedJson(raw: unknown): CalculatorState | Error {
   if (!isObject(raw)) {
@@ -128,7 +125,7 @@ export function parseImportedJson(raw: unknown): CalculatorState | Error {
 
   const state: CalculatorState = {
     cashFlows: parsedCashFlows,
-    valuationDate: null, // Will be set to today's date by useCalculator
+    valuationDate: (valuationDate as string | null) ?? null,
     currentValue: (currentValue as number | null) ?? null,
     history: history as CalculatorState["history"],
     fundName: (fundName as string | null) ?? null,

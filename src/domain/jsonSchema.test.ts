@@ -78,8 +78,8 @@ describe("jsonSchema – parseImportedJson", () => {
     expect(state.cashFlows.length).toBe(2);
     expect(state.cashFlows[0].id).toBeTypeOf("string");
     expect(state.cashFlows[0].id).not.toBe("");
-    // valuationDate is intentionally NOT restored from import - will be set to today by useCalculator
-    expect(state.valuationDate).toBe(null);
+    // valuationDate is restored from import (unlike localStorage restore which uses today)
+    expect(state.valuationDate).toBe("2025-01-01");
     expect(state.currentValue).toBe(1200);
     expect(state.history.length).toBe(1);
     expect(state.fundName).toBe("My Fund");

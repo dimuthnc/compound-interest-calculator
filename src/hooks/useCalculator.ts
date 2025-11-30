@@ -242,11 +242,8 @@ export function useCalculator() {
   };
 
   const importScenario = (nextState: CalculatorState): void => {
-    // When importing, preserve current valuationDate (which is today's date)
-    setState((prev) => ({
-      ...nextState,
-      valuationDate: prev.valuationDate, // Keep the current date, don't import it
-    }));
+    // When importing, restore all state including valuationDate from the imported file
+    setState(nextState);
     setSaveSnapshotResult(null);
   };
 

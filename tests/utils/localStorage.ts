@@ -1,0 +1,55 @@
+import { Page } from '@playwright/test';
+
+const STORAGE_KEY = 'effective-interest-calculator-state-v1';
+
+/**
+ * Clear localStorage for the calculator app
+ */
+export async function clearLocalStorage(page: Page): Promise<void> {
+  await page.evaluate((key) => {
+    localStorage.removeItem(key);
+  }, STORAGE_KEY);
+}
+
+/**
+ * Get the current calculator state from localStorage
+ */
+export async function getLocalStorageState(page: Page): Promise<unknown> {
+  return await page.evaluate((key) => {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : null;
+  }, STORAGE_KEY);
+}
+
+/**
+ * Set calculator state in localStorage
+ */
+export async function setLocalStorageState(page: Page, state: unknown): Promise<void> {
+  await page.evaluate(({ key, state }) => {
+    localStorage.setItem(key, JSON.stringify(state));
+  }, { key: STORAGE_KEY, state });
+}
+
+/**
+ * Wait for localStorage to be updated (after debounce)
+ */
+export async function waitForAutosave(page: Page, timeoutMs = 1000): Promise<void> {
+  await page.waitForTimeout(timeoutMs);
+}
+
+/**
+ * Verify that localStorage contains the expected data
+ */
+export async function verifyLocalStorageContains(page: Page, expectedFields: Record<string, unknown>): Promise<boolean> {
+  const state = await getLocalStorageState(page);
+  if (!state || typeof state !== 'object') return false;
+
+  const stateObj = state as Record<string, unknown>;
+  for (const [key, value] of Object.entries(expectedFields)) {
+    if (JSON.stringify(stateObj[key]) !== JSON.stringify(value)) {
+      return false;
+    }
+  }
+  return true;
+}
+
