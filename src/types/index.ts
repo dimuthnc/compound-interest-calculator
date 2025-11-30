@@ -10,7 +10,8 @@ export interface CashFlowEntry {
 export interface HistoricalSnapshot {
   calculationDateTime: string; // ISO datetime, e.g. "2025-11-16T10:15:30Z"
   valuationDate: string; // ISO date used for this calculation
-  currentValue: number; // fund value used at valuation// Legacy fields for backward compatibility when reading old files
+  currentValue: number; // fund value used at valuation date
+  // Legacy fields for backward compatibility when reading old files
   // These should NOT be written to new exports
   irr?: number | null; // DEPRECATED: Calculated dynamically
   simpleRate?: number | null; // DEPRECATED: Calculated dynamically

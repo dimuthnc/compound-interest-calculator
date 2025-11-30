@@ -46,16 +46,10 @@ export function HistoryChart({ history, cashFlows }: HistoryChartProps) {
 
   const labels = sorted.map((s) => s.valuationDate);
 
-  // Compute metrics dynamically for each snapshot
-  const irrData = sorted.map((s) => {
-    const metrics = computeSnapshotMetrics(s, cashFlows);
-    return metrics.irr !== null ? metrics.irr * 100 : null;
-  });
-
-  const simpleRateData = sorted.map((s) => {
-    const metrics = computeSnapshotMetrics(s, cashFlows);
-    return metrics.simpleRate !== null ? metrics.simpleRate * 100 : null;
-  });
+  // Compute metrics dynamically for each snapshot (only once per snapshot)
+  const metricsData = sorted.map((s) => computeSnapshotMetrics(s, cashFlows));
+  const irrData = metricsData.map((m) => m.irr !== null ? m.irr * 100 : null);
+  const simpleRateData = metricsData.map((m) => m.simpleRate !== null ? m.simpleRate * 100 : null);
 
   const data = {
     labels,
