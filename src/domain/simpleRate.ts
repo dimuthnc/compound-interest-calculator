@@ -32,40 +32,29 @@ export function computeSimpleRate(input: SimpleRateInput): number | null {
   // Sort cash flows by date (ISO strings sort lexicographically like dates).
   const sorted = [...cashFlows].sort((a, b) => a.date.localeCompare(b.date));
 
-  // Build events: each cash flow date (after applying it) plus the valuation date.
-  const events: { date: Date; balance: number }[] = [];
-  let balance = 0;
-
-  for (const cf of sorted) {
-    const date = new Date(cf.date);
-
-    if (cf.direction === "deposit") {
-      balance += cf.amount;
-    } else {
-      balance -= cf.amount;
-    }
-
-    events.push({ date, balance });
-  }
-
-  // Ensure the valuation date is after or equal to the last cash flow date.
-  events.push({ date: valuationDate, balance });
-
   // Accumulate balance × days over each interval between events.
   let sumWeighted = 0;
-  for (let i = 0; i < events.length - 1; i++) {
-    const start = events[i];
-    const end = events[i + 1];
+  let runningBalance = 0;
+  let lastDate = new Date(sorted[0].date);
 
-    const days = differenceInCalendarDays(end.date, start.date);
+  for (const cf of sorted) {
+    const currentDate = new Date(cf.date);
+    const days = differenceInCalendarDays(currentDate, lastDate);
+
     if (days > 0) {
-      // If the invested balance goes negative for any positive-day interval,
-      // consider the denominator invalid (over-withdrawal scenario).
-      if (start.balance < 0) {
-        return null;
-      }
-      sumWeighted += start.balance * days;
+      if (runningBalance < 0) return null; // Invalid if balance was negative.
+      sumWeighted += runningBalance * days;
     }
+
+    runningBalance += cf.direction === "deposit" ? cf.amount : -cf.amount;
+    lastDate = currentDate;
+  }
+
+  // Add the final period from the last cash flow to the valuation date.
+  const finalDays = differenceInCalendarDays(valuationDate, lastDate);
+  if (finalDays > 0) {
+    if (runningBalance < 0) return null;
+    sumWeighted += runningBalance * finalDays;
   }
 
   // Net invested: deposits minus withdrawals.

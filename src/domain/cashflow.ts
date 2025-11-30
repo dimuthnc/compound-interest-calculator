@@ -1,5 +1,7 @@
-import type { CashFlowEntry } from "../types";
+import type { CashFlowEntry, HistoricalSnapshot } from "../types";
 import type { IrrCashFlow } from "./irr";
+import { computeIrr } from "./irr";
+import { computeSimpleRate } from "./simpleRate";
 
 // Return a new array sorted ascending by ISO date without mutating the original.
 export function sortCashFlowsByDate(cashFlows: CashFlowEntry[]): CashFlowEntry[] {
@@ -12,6 +14,15 @@ export function computeNetInvested(cashFlows: CashFlowEntry[]): number {
     const signed = cf.direction === "deposit" ? cf.amount : -cf.amount;
     return sum + signed;
   }, 0);
+}
+
+export function computeNetInvestedAndProfit(
+  cashFlows: CashFlowEntry[],
+  currentValue: number,
+): { netInvested: number; profit: number } {
+  const netInvested = computeNetInvested(cashFlows);
+  const profit = currentValue - netInvested;
+  return { netInvested, profit };
 }
 
 // Map UI cash flows + current value into IrrCashFlow entries for IRR computation.
@@ -31,3 +42,47 @@ export function mapToIrrCashFlows(
 
   return flows;
 }
+
+/**
+ * Compute all calculated metrics for a historical snapshot dynamically.
+ * This function replaces stored calculated values with fresh computations.
+ *
+ * @param snapshot - The historical snapshot with valuationDate and currentValue
+ * @param cashFlows - The cash flows to use for calculation (typically current cash flows)
+ * @returns Computed metrics: irr, simpleRate, netInvested, and profit
+ */
+export function computeSnapshotMetrics(
+  snapshot: Pick<HistoricalSnapshot, 'valuationDate' | 'currentValue'>,
+  cashFlows: CashFlowEntry[],
+): {
+  irr: number | null;
+  simpleRate: number | null;
+  netInvested: number;
+  profit: number;
+} {
+  const sorted = sortCashFlowsByDate(cashFlows);
+  const { netInvested, profit } = computeNetInvestedAndProfit(sorted, snapshot.currentValue);
+
+  let irr: number | null = null;
+  let simpleRate: number | null = null;
+
+  if (sorted.length > 0) {
+    const valuationDate = new Date(snapshot.valuationDate);
+    const irrFlows = mapToIrrCashFlows(sorted, valuationDate, snapshot.currentValue);
+    irr = computeIrr(irrFlows);
+
+    simpleRate = computeSimpleRate({
+      cashFlows: sorted,
+      valuationDate,
+      currentValue: snapshot.currentValue,
+    });
+  }
+
+  return {
+    irr,
+    simpleRate,
+    netInvested,
+    profit,
+  };
+}
+

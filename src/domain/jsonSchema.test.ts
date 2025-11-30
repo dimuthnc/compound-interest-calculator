@@ -20,7 +20,7 @@ const mkSnapshot = (overrides?: Partial<HistoricalSnapshot>): HistoricalSnapshot
 });
 
 describe("jsonSchema – buildExportJson", () => {
-  it("builds a stable v1 export payload", () => {
+  it("builds a stable v1 export payload without calculated fields in history", () => {
     const state: CalculatorState = {
       cashFlows: [
         mkCF("a", "2024-01-01", 1000, "deposit"),
@@ -44,6 +44,16 @@ describe("jsonSchema – buildExportJson", () => {
     expect(exported.currentValue).toBe(1200);
     expect(exported.history.length).toBe(1);
     expect(exported.fundName).toBe("My Fund");
+
+    // Verify that calculated fields are NOT included in exported history
+    const exportedSnapshot = exported.history[0];
+    expect(exportedSnapshot).toHaveProperty('calculationDateTime');
+    expect(exportedSnapshot).toHaveProperty('valuationDate');
+    expect(exportedSnapshot).toHaveProperty('currentValue');
+    expect(exportedSnapshot).not.toHaveProperty('irr');
+    expect(exportedSnapshot).not.toHaveProperty('simpleRate');
+    expect(exportedSnapshot).not.toHaveProperty('netInvested');
+    expect(exportedSnapshot).not.toHaveProperty('profit');
   });
 });
 
@@ -121,5 +131,47 @@ describe("jsonSchema – parseImportedJson", () => {
     const r2 = parseImportedJson({ ...base, history: [123] });
     expect(r1).toBeInstanceOf(Error);
     expect(r2).toBeInstanceOf(Error);
+  });
+
+  it("handles backward compatibility with old files containing calculated fields in history", () => {
+    // Old format with irr, simpleRate, netInvested, and profit in history
+    const payloadWithOldFormat = {
+      version: 1,
+      cashFlows: [
+        { date: "2024-01-01", amount: 1000, direction: "deposit" },
+      ],
+      valuationDate: "2025-01-01",
+      currentValue: 1200,
+      history: [
+        {
+          calculationDateTime: "2025-01-02T00:00:00Z",
+          valuationDate: "2025-01-01",
+          currentValue: 1234,
+          irr: 0.1,
+          simpleRate: 0.11,
+          netInvested: 1100,
+          profit: 134,
+        }
+      ],
+      fundName: "My Fund",
+    };
+
+    const result = parseImportedJson(payloadWithOldFormat);
+    expect(result).not.toBeInstanceOf(Error);
+
+    const state = result as CalculatorState;
+    expect(state.history.length).toBe(1);
+
+    // The old calculated fields should be preserved in the imported state
+    // (for backward compatibility when reading), but they won't be used
+    const snapshot = state.history[0];
+    expect(snapshot.calculationDateTime).toBe("2025-01-02T00:00:00Z");
+    expect(snapshot.valuationDate).toBe("2025-01-01");
+    expect(snapshot.currentValue).toBe(1234);
+    // Old fields are preserved but optional
+    expect(snapshot.irr).toBe(0.1);
+    expect(snapshot.simpleRate).toBe(0.11);
+    expect(snapshot.netInvested).toBe(1100);
+    expect(snapshot.profit).toBe(134);
   });
 });
