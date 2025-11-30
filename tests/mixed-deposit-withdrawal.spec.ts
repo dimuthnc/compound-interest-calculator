@@ -27,17 +27,16 @@ test.describe('Scenario 3 - Deposit and Withdrawal Pattern', () => {
     await test.step('Add multiple cash flows with deposits and withdrawals', async () => {
       for (const cf of scenario.cashFlows) {
         await addCashFlow(page, cf.date, cf.amount, cf.direction);
-        await page.waitForTimeout(300); // Wait between additions
       }
 
-      // Wait for UI to update
-      await page.waitForTimeout(500);
+      // Verify all cash flows were added
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(scenario.cashFlows.length);
     });
 
     await test.step('Set valuation date and current value', async () => {
       await setValuationDate(page, scenario.valuationDate);
       await setCurrentValue(page, scenario.currentValue);
-      await page.waitForTimeout(500);
     });
 
     await test.step('Verify net invested and profit calculations', async () => {
@@ -82,7 +81,6 @@ test.describe('Scenario 3 - Deposit and Withdrawal Pattern', () => {
 
     await test.step('Save snapshot and verify history row', async () => {
       await saveSnapshot(page);
-      await page.waitForTimeout(500);
 
       // History should have one row
       const historyRows = page.locator('table tbody tr').filter({ hasText: scenario.valuationDate });
@@ -103,7 +101,9 @@ test.describe('Scenario 3 - Deposit and Withdrawal Pattern', () => {
       await addCashFlow(page, '2024-01-01', 1000, 'Deposit');
       await setValuationDate(page, '2025-01-01');
       await setCurrentValue(page, 1100);
-      await page.waitForTimeout(500);
+      // Verify cash flow was added
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(1);
     });
 
     await test.step('Get initial profit value', async () => {
@@ -114,7 +114,10 @@ test.describe('Scenario 3 - Deposit and Withdrawal Pattern', () => {
 
     await test.step('Add a withdrawal and verify profit updates', async () => {
       await addCashFlow(page, '2024-06-01', 200, 'Withdrawal');
-      await page.waitForTimeout(500);
+
+      // Verify second cash flow was added
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(2);
 
       const updatedProfit = await getProfit(page);
       const updatedProfitValue = parseCurrency(updatedProfit);

@@ -37,26 +37,22 @@ test.describe('Cash Flow CRUD Operations', () => {
 
     await test.step('Update the amount', async () => {
       await updateCashFlow(page, 0, { amount: 1500 });
-      await page.waitForTimeout(300);
     });
 
     await test.step('Verify updated amount', async () => {
       const rows = page.locator('[data-testid="cash-flow-row"]');
       const amountInput = rows.first().getByLabel(/amount/i);
-      const value = await amountInput.inputValue();
-      expect(value).toBe('1500');
+      await expect(amountInput).toHaveValue('1500');
     });
 
     await test.step('Update the date', async () => {
       await updateCashFlow(page, 0, { date: '2024-02-01' });
-      await page.waitForTimeout(300);
     });
 
     await test.step('Verify updated date', async () => {
       const rows = page.locator('[data-testid="cash-flow-row"]');
       const dateInput = rows.first().getByLabel(/date/i);
-      const value = await dateInput.inputValue();
-      expect(value).toBe('2024-02-01');
+      await expect(dateInput).toHaveValue('2024-02-01');
     });
   });
 
@@ -72,19 +68,18 @@ test.describe('Cash Flow CRUD Operations', () => {
 
     await test.step('Delete the middle cash flow', async () => {
       await deleteCashFlow(page, 1);
-      await page.waitForTimeout(300);
     });
 
     await test.step('Verify count decreased', async () => {
-      const count = await getCashFlowCount(page);
-      expect(count).toBe(2);
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(2);
     });
 
     await test.step('Delete all remaining cash flows', async () => {
       await deleteCashFlow(page, 0);
-      await page.waitForTimeout(300);
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(1);
       await deleteCashFlow(page, 0);
-      await page.waitForTimeout(300);
     });
 
     await test.step('Verify empty state is shown', async () => {
@@ -97,7 +92,8 @@ test.describe('Cash Flow CRUD Operations', () => {
       await addCashFlow(page, '2024-06-01', 500, 'Deposit');
       await addCashFlow(page, '2024-01-01', 1000, 'Deposit');
       await addCashFlow(page, '2024-09-01', 300, 'Withdrawal');
-      await page.waitForTimeout(500);
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(3);
     });
 
     await test.step('Verify they appear in entry order (not chronologically sorted in UI)', async () => {
@@ -121,7 +117,6 @@ test.describe('Cash Flow CRUD Operations', () => {
       // Calculations internally use sorted data
       await setValuationDate(page, '2025-01-01');
       await setCurrentValue(page, 1500);
-      await page.waitForTimeout(500);
 
       // Net invested should be correct: 1000 + 500 - 300 = 1200
       const netInvestedSection = page.locator('text=Net Invested').locator('..');
@@ -169,7 +164,6 @@ test.describe('Cash Flow CRUD Operations', () => {
 
     await test.step('Change to withdrawal', async () => {
       await updateCashFlow(page, 0, { direction: 'Withdrawal' });
-      await page.waitForTimeout(300);
     });
 
     await test.step('Verify withdrawal is selected', async () => {

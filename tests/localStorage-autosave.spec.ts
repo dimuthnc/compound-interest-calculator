@@ -13,7 +13,9 @@ test.describe('LocalStorage Autosave', () => {
   test('Auto-saves state after adding cash flow', async ({ page }) => {
     await test.step('Add a cash flow', async () => {
       await addCashFlow(page, '2024-01-01', 1000, 'Deposit');
-      await page.waitForTimeout(500);
+      // Verify the cash flow row is visible
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(1);
     });
 
     await test.step('Wait for autosave debounce', async () => {
@@ -23,17 +25,18 @@ test.describe('LocalStorage Autosave', () => {
     await test.step('Verify localStorage contains cash flow', async () => {
       const state = await getLocalStorageState(page);
       expect(state).toBeTruthy();
-      expect(state.cashFlows).toBeDefined();
-      expect(state.cashFlows.length).toBe(1);
-      expect(state.cashFlows[0].date).toBe('2024-01-01');
-      expect(state.cashFlows[0].amount).toBe(1000);
+      expect(state!.cashFlows).toBeDefined();
+      expect(state!.cashFlows.length).toBe(1);
+      expect(state!.cashFlows[0].date).toBe('2024-01-01');
+      expect(state!.cashFlows[0].amount).toBe(1000);
     });
 
     await test.step('Reload page and verify state is restored', async () => {
       await page.reload();
 
-      // Wait for page to load
-      await page.waitForTimeout(500);
+      // Wait for page to fully load by checking for cash flow rows
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(1);
 
       // Verify cash flow is still there
       const count = await getCashFlowCount(page);
@@ -46,7 +49,9 @@ test.describe('LocalStorage Autosave', () => {
       await addCashFlow(page, '2024-01-01', 1000, 'Deposit');
       await setValuationDate(page, '2025-01-01');
       await setCurrentValue(page, 1100);
-      await page.waitForTimeout(500);
+      // Verify the cash flow row is visible
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(1);
     });
 
     await test.step('Wait for autosave', async () => {
@@ -56,12 +61,15 @@ test.describe('LocalStorage Autosave', () => {
     await test.step('Verify localStorage contains valuation data', async () => {
       const state = await getLocalStorageState(page);
       // Valuation date defaults to today, not stored
-      expect(state.currentValue).toBe(1100);
+      expect(state!.currentValue).toBe(1100);
     });
 
     await test.step('Reload and verify current value is restored', async () => {
       await page.reload();
-      await page.waitForTimeout(500);
+
+      // Wait for page to fully load by checking for cash flow rows
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(1);
 
       // Valuation date always defaults to today (by design)
       const valuationDateInput = page.getByLabel(/valuation date/i);
@@ -87,15 +95,12 @@ test.describe('LocalStorage Autosave', () => {
     await test.step('Verify localStorage has data', async () => {
       const state = await getLocalStorageState(page);
       expect(state).toBeTruthy();
-      expect(state.cashFlows.length).toBeGreaterThan(0);
+      expect(state!.cashFlows.length).toBeGreaterThan(0);
     });
 
     await test.step('Click Clear All button', async () => {
       const clearButton = page.getByRole('button', { name: /clear.*all/i });
       await clearButton.click();
-
-      // Wait for confirmation or immediate clear
-      await page.waitForTimeout(500);
     });
 
     await test.step('Verify UI is cleared', async () => {
@@ -117,7 +122,6 @@ test.describe('LocalStorage Autosave', () => {
 
     await test.step('Reload and verify empty state persists', async () => {
       await page.reload();
-      await page.waitForTimeout(500);
 
       await expect(page.getByText(/add at least one deposit to start/i)).toBeVisible();
     });
@@ -137,12 +141,15 @@ test.describe('LocalStorage Autosave', () => {
 
     await test.step('Verify all changes are saved', async () => {
       const state = await getLocalStorageState(page);
-      expect(state.cashFlows.length).toBe(3);
+      expect(state!.cashFlows.length).toBe(3);
     });
 
     await test.step('Reload and verify all cash flows restored', async () => {
       await page.reload();
-      await page.waitForTimeout(500);
+
+      // Wait for page to fully load by checking for cash flow rows
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(3);
 
       const count = await getCashFlowCount(page);
       expect(count).toBe(3);
@@ -154,24 +161,29 @@ test.describe('LocalStorage Autosave', () => {
       await addCashFlow(page, '2024-01-01', 1000, 'Deposit');
       await setValuationDate(page, '2025-01-01');
       await setCurrentValue(page, 1100);
-      await page.waitForTimeout(500);
+
+      // Verify cash flow is visible
+      const rows = page.locator('[data-testid="cash-flow-row"]');
+      await expect(rows).toHaveCount(1);
 
       const saveButton = page.getByRole('button', { name: /save.*snapshot/i });
       await saveButton.click();
-      await page.waitForTimeout(500);
+
+      // Wait for the snapshot to appear in history
+      const historyRows = page.locator('table tbody tr');
+      await expect(historyRows).toHaveCount(1);
 
       await waitForAutosave(page, 1000);
     });
 
     await test.step('Verify history in localStorage', async () => {
       const state = await getLocalStorageState(page);
-      expect(state.history).toBeDefined();
-      expect(state.history.length).toBe(1);
+      expect(state!.history).toBeDefined();
+      expect(state!.history.length).toBe(1);
     });
 
     await test.step('Reload and verify history is restored', async () => {
       await page.reload();
-      await page.waitForTimeout(500);
 
       const historyRows = page.locator('table tbody tr');
       await expect(historyRows).toHaveCount(1);
