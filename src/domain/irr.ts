@@ -75,7 +75,7 @@ export function computeIrr(cashFlows: IrrCashFlow[]): number | null {
   // --- Bisection Method (Fallback) ---
   let mid = 0;
   let npvLow = calculateNpv(low, sortedFlows, baseDate);
-  let npvHigh = calculateNpv(high, sortedFlows, baseDate);
+  const npvHigh = calculateNpv(high, sortedFlows, baseDate);
 
   if (npvLow * npvHigh > 0) {
     return null; // No root in the interval [low, high]
