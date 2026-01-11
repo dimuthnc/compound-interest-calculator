@@ -106,4 +106,46 @@ describe("computeSnapshotMetrics", () => {
     expect(metrics.irr).not.toBeNull();
     expect(metrics.irr).toBeLessThan(0); // Negative return
   });
+
+  it("uses stored netInvested when available (backward compatibility)", () => {
+    const cashFlows: CashFlowEntry[] = [
+      makeEntry({ id: "1", date: "2024-01-01", amount: 1000, direction: "deposit" }),
+      makeEntry({ id: "2", date: "2024-06-01", amount: 500, direction: "deposit" }),
+    ];
+
+    // Snapshot with stored netInvested (different from what would be calculated)
+    const snapshotWithStored: Pick<HistoricalSnapshot, 'valuationDate' | 'currentValue' | 'netInvested'> = {
+      valuationDate: "2024-12-31",
+      currentValue: 1800,
+      netInvested: 800, // Stored value, different from current cashflows (1000+500=1500)
+    };
+
+    const metrics = computeSnapshotMetrics(snapshotWithStored, cashFlows);
+
+    // Should use stored netInvested, not calculated
+    expect(metrics.netInvested).toBe(800);
+    expect(metrics.profit).toBe(1000); // 1800 - 800 = 1000
+    expect(metrics.hasStoredNetInvested).toBe(true);
+  });
+
+  it("calculates netInvested dynamically when not stored (backward compatibility for old data)", () => {
+    const cashFlows: CashFlowEntry[] = [
+      makeEntry({ id: "1", date: "2024-01-01", amount: 1000, direction: "deposit" }),
+      makeEntry({ id: "2", date: "2024-06-01", amount: 500, direction: "deposit" }),
+    ];
+
+    // Snapshot without stored netInvested (old data format)
+    const snapshotWithoutStored: Pick<HistoricalSnapshot, 'valuationDate' | 'currentValue' | 'netInvested'> = {
+      valuationDate: "2024-12-31",
+      currentValue: 1800,
+      netInvested: undefined, // Not stored
+    };
+
+    const metrics = computeSnapshotMetrics(snapshotWithoutStored, cashFlows);
+
+    // Should calculate netInvested from current cashflows
+    expect(metrics.netInvested).toBe(1500); // 1000 + 500 = 1500
+    expect(metrics.profit).toBe(300); // 1800 - 1500 = 300
+    expect(metrics.hasStoredNetInvested).toBe(false);
+  });
 });

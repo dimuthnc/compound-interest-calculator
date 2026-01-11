@@ -19,16 +19,17 @@ export interface HistoryTableProps {
   history: HistoricalSnapshot[];
   cashFlows: CashFlowEntry[]; // Used to calculate metrics dynamically
   onDeleteSnapshot: (index: number) => void;
-  onUpdateSnapshot: (index: number, patch: Partial<Pick<HistoricalSnapshot, 'valuationDate' | 'currentValue'>>) => void;
+  onUpdateSnapshot: (index: number, patch: Partial<Pick<HistoricalSnapshot, 'valuationDate' | 'currentValue' | 'netInvested'>>) => void;
 }
 
 const DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm";
 
 export function HistoryTable({ history, cashFlows, onDeleteSnapshot, onUpdateSnapshot }: HistoryTableProps) {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [editValues, setEditValues] = useState<{ valuationDate: string; currentValue: string }>({
+  const [editValues, setEditValues] = useState<{ valuationDate: string; currentValue: string; netInvested: string }>({
     valuationDate: '',
-    currentValue: ''
+    currentValue: '',
+    netInvested: ''
   });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
 
@@ -40,11 +41,12 @@ export function HistoryTable({ history, cashFlows, onDeleteSnapshot, onUpdateSna
     );
   }
 
-  const handleEditStart = (index: number, snapshot: HistoricalSnapshot) => {
+  const handleEditStart = (index: number, snapshot: HistoricalSnapshot, metrics: { netInvested: number }) => {
     setEditingIndex(index);
     setEditValues({
       valuationDate: snapshot.valuationDate,
       currentValue: snapshot.currentValue.toString(),
+      netInvested: (snapshot.netInvested ?? metrics.netInvested).toString(),
     });
   };
 
@@ -55,16 +57,23 @@ export function HistoryTable({ history, cashFlows, onDeleteSnapshot, onUpdateSna
       return;
     }
 
+    const netInvested = parseFloat(editValues.netInvested);
+    if (isNaN(netInvested)) {
+      alert("Please enter a valid number for net invested");
+      return;
+    }
+
     onUpdateSnapshot(index, {
       valuationDate: editValues.valuationDate,
       currentValue,
+      netInvested,
     });
     setEditingIndex(null);
   };
 
   const handleEditCancel = () => {
     setEditingIndex(null);
-    setEditValues({ valuationDate: '', currentValue: '' });
+    setEditValues({ valuationDate: '', currentValue: '', netInvested: '' });
   };
 
   const handleDeleteClick = (index: number) => {
@@ -159,7 +168,25 @@ export function HistoryTable({ history, cashFlows, onDeleteSnapshot, onUpdateSna
                           snapshot.currentValue.toLocaleString(undefined, { maximumFractionDigits: 2 })
                         )}
                       </TableCell>
-                      <TableCell className="text-right">{metrics.netInvested.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                      <TableCell className="text-right">
+                        {isEditing ? (
+                          <Input
+                            type="number"
+                            value={editValues.netInvested}
+                            onChange={(e) => setEditValues({ ...editValues, netInvested: e.target.value })}
+                            className="w-32 text-right"
+                            step="0.01"
+                          />
+                        ) : (
+                          <span
+                            className={!metrics.hasStoredNetInvested ? "text-orange-600 cursor-pointer underline decoration-dotted" : ""}
+                            title={!metrics.hasStoredNetInvested ? "Calculated from current cash flows. Click edit to set a fixed value." : ""}
+                          >
+                            {metrics.netInvested.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                            {!metrics.hasStoredNetInvested && <span className="ml-1 text-xs">⚠️</span>}
+                          </span>
+                        )}
+                      </TableCell>
                       <TableCell className={`text-right font-medium ${profitColor}`}>
                         {metrics.profit.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                       </TableCell>
@@ -174,6 +201,7 @@ export function HistoryTable({ history, cashFlows, onDeleteSnapshot, onUpdateSna
                                 size="sm"
                                 onClick={() => handleEditSave(index)}
                                 title="Save changes"
+                                aria-label="Save"
                               >
                                 <Check className="h-4 w-4 text-green-600" />
                               </Button>
@@ -182,6 +210,7 @@ export function HistoryTable({ history, cashFlows, onDeleteSnapshot, onUpdateSna
                                 size="sm"
                                 onClick={handleEditCancel}
                                 title="Cancel editing"
+                                aria-label="Cancel"
                               >
                                 <X className="h-4 w-4 text-gray-600" />
                               </Button>
@@ -191,8 +220,9 @@ export function HistoryTable({ history, cashFlows, onDeleteSnapshot, onUpdateSna
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleEditStart(index, snapshot)}
+                                onClick={() => handleEditStart(index, snapshot, metrics)}
                                 title="Edit snapshot"
+                                aria-label="Edit"
                               >
                                 <Pencil className="h-4 w-4" />
                               </Button>
@@ -201,6 +231,7 @@ export function HistoryTable({ history, cashFlows, onDeleteSnapshot, onUpdateSna
                                 size="sm"
                                 onClick={() => handleDeleteClick(index)}
                                 title="Delete snapshot"
+                                aria-label="Delete"
                               >
                                 <Trash2 className="h-4 w-4 text-red-600" />
                               </Button>

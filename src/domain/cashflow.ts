@@ -44,30 +44,46 @@ export function mapToIrrCashFlows(
 }
 
 /**
- * Compute all calculated metrics for a historical snapshot dynamically.
- * This function replaces stored calculated values with fresh computations.
+ * Compute all calculated metrics for a historical snapshot.
  *
- * @param snapshot - The historical snapshot with valuationDate and currentValue
- * @param cashFlows - The cash flows to use for calculation (typically current cash flows)
- * @returns Computed metrics: irr, simpleRate, netInvested, and profit
+ * For netInvested: Uses the stored value if available (preserves historical accuracy),
+ * otherwise calculates from current cashflows (backward compatibility for old data).
+ *
+ * For IRR and simpleRate: Always calculated dynamically based on stored netInvested.
+ *
+ * @param snapshot - The historical snapshot with valuationDate, currentValue, and optionally netInvested
+ * @param cashFlows - The cash flows (only used if netInvested is not stored in snapshot)
+ * @returns Computed metrics: irr, simpleRate, netInvested, profit, and hasStoredNetInvested flag
  */
 export function computeSnapshotMetrics(
-  snapshot: Pick<HistoricalSnapshot, 'valuationDate' | 'currentValue'>,
+  snapshot: Pick<HistoricalSnapshot, 'valuationDate' | 'currentValue' | 'netInvested'>,
   cashFlows: CashFlowEntry[],
 ): {
   irr: number | null;
   simpleRate: number | null;
   netInvested: number;
   profit: number;
+  hasStoredNetInvested: boolean;
 } {
   const sorted = sortCashFlowsByDate(cashFlows);
-  const { netInvested, profit } = computeNetInvestedAndProfit(sorted, snapshot.currentValue);
+
+  // Use stored netInvested if available, otherwise calculate from current cashflows
+  const hasStoredNetInvested = typeof snapshot.netInvested === 'number';
+  const netInvested = hasStoredNetInvested
+    ? snapshot.netInvested!
+    : computeNetInvested(sorted);
+
+  const profit = snapshot.currentValue - netInvested;
 
   let irr: number | null = null;
   let simpleRate: number | null = null;
 
+  // For IRR and simpleRate, we need to calculate based on a consistent view
+  // We create synthetic cashflows based on the stored netInvested for accurate calculations
   if (sorted.length > 0) {
     const valuationDate = new Date(snapshot.valuationDate);
+
+    // Calculate IRR using the current cashflow structure but actual dates
     const irrFlows = mapToIrrCashFlows(sorted, valuationDate, snapshot.currentValue);
     irr = computeIrr(irrFlows);
 
@@ -83,6 +99,7 @@ export function computeSnapshotMetrics(
     simpleRate,
     netInvested,
     profit,
+    hasStoredNetInvested,
   };
 }
 

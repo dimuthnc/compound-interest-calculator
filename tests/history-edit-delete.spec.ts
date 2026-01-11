@@ -40,7 +40,8 @@ test.describe('History Snapshot Edit and Delete', () => {
     });
 
     await test.step('Update current value in edit mode', async () => {
-      const valueInput = page.locator('table tbody tr').first().locator('input[type="number"]');
+      // The currentValue input has min="0" attribute, while netInvested does not
+      const valueInput = page.locator('table tbody tr').first().locator('input[type="number"][min="0"]');
       await valueInput.clear();
       await valueInput.fill('1150');
     });
@@ -81,7 +82,8 @@ test.describe('History Snapshot Edit and Delete', () => {
     });
 
     await test.step('Change values', async () => {
-      const valueInput = page.locator('table tbody tr').first().locator('input[type="number"]');
+      // The currentValue input has min="0" attribute, while netInvested does not
+      const valueInput = page.locator('table tbody tr').first().locator('input[type="number"][min="0"]');
       await valueInput.clear();
       await valueInput.fill('9999');
     });
@@ -141,8 +143,10 @@ test.describe('History Snapshot Edit and Delete', () => {
       await expect(page.getByText(/confirm delete/i)).toBeVisible();
       await expect(page.getByText(/are you sure/i)).toBeVisible();
 
-      // Click the Delete button in the modal (not Cancel)
-      const confirmButton = page.getByRole('button', { name: /^delete$/i }).last();
+      // Click the Delete button in the modal - it's a destructive button with text content "Delete"
+      // The modal container has the confirmation text, so we scope to that context
+      const modal = page.locator('div.fixed').filter({ hasText: 'Confirm Delete' });
+      const confirmButton = modal.getByRole('button', { name: /^delete$/i });
       await confirmButton.click();
       await page.waitForTimeout(500);
     });
@@ -184,7 +188,9 @@ test.describe('History Snapshot Edit and Delete', () => {
 
       // Confirm in modal
       await expect(page.getByText(/confirm delete/i)).toBeVisible();
-      const confirmButton = page.getByRole('button', { name: /^delete$/i }).last();
+      // Target the Delete button in the modal specifically
+      const modal = page.locator('div.fixed').filter({ hasText: 'Confirm Delete' });
+      const confirmButton = modal.getByRole('button', { name: /^delete$/i });
       await confirmButton.click();
       await page.waitForTimeout(500);
     });
@@ -222,24 +228,31 @@ test.describe('History Snapshot Edit and Delete', () => {
     });
 
     await test.step('Enter invalid current value (negative)', async () => {
-      const valueInput = page.locator('table tbody tr').first().locator('input[type="number"]');
+      // The currentValue input has min="0" attribute, while netInvested does not
+      const valueInput = page.locator('table tbody tr').first().locator('input[type="number"][min="0"]');
       await valueInput.clear();
       await valueInput.fill('-100');
     });
 
-    await test.step('Attempt to save', async () => {
+    await test.step('Attempt to save and verify validation', async () => {
+      // Set up a listener for the browser alert dialog
+      let alertMessage = '';
+      page.on('dialog', async (dialog) => {
+        alertMessage = dialog.message();
+        await dialog.accept();
+      });
+
       const saveButton = page.locator('table tbody tr').first().getByRole('button', { name: /save|check/i });
       await saveButton.click();
       await page.waitForTimeout(300);
-    });
 
-    await test.step('Verify error message or value is not saved', async () => {
-      // Either an alert appears or the edit mode stays active
-      // Check if we're still in edit mode or if an error is shown
-      const hasAlert = await page.locator('text=/error|invalid|positive/i').isVisible().catch(() => false);
+      // Verify that either:
+      // 1. An alert was shown with appropriate message
+      // 2. Or edit mode is still active (inputs still visible)
+      const hasValidationAlert = alertMessage.toLowerCase().includes('valid') || alertMessage.toLowerCase().includes('positive');
       const hasEditInput = await page.locator('table tbody tr').first().locator('input[type="number"]').isVisible().catch(() => false);
 
-      expect(hasAlert || hasEditInput).toBeTruthy();
+      expect(hasValidationAlert || hasEditInput).toBeTruthy();
     });
   });
 });

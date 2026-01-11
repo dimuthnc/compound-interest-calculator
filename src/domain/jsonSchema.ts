@@ -19,7 +19,9 @@ export function buildExportJson(state: CalculatorState): ExportedScenarioJson {
       calculationDateTime: snapshot.calculationDateTime,
       valuationDate: snapshot.valuationDate,
       currentValue: snapshot.currentValue,
-      // Exclude calculated fields (irr, simpleRate, netInvested, profit)
+      // Include netInvested to preserve historical accuracy
+      netInvested: snapshot.netInvested,
+      // Exclude other calculated fields (irr, simpleRate, profit)
       // These will be calculated dynamically when needed
     })),
     fundName: state.fundName ?? null,
