@@ -10,11 +10,16 @@ export interface CashFlowEntry {
 export interface HistoricalSnapshot {
   calculationDateTime: string; // ISO datetime, e.g. "2025-11-16T10:15:30Z"
   valuationDate: string; // ISO date used for this calculation
-  currentValue: number; // fund value used at valuation// Legacy fields for backward compatibility when reading old files
-  // These should NOT be written to new exports
+  currentValue: number; // fund value used at valuationDate
+
+  // netInvested is now stored to preserve historical accuracy
+  // When a new transaction is added, past snapshots should retain their original netInvested value
+  netInvested?: number; // The invested amount at the time of snapshot (undefined for backward compatibility)
+
+  // Legacy fields for backward compatibility when reading old files
+  // These should NOT be written to new exports - calculated dynamically instead
   irr?: number | null; // DEPRECATED: Calculated dynamically
   simpleRate?: number | null; // DEPRECATED: Calculated dynamically
-  netInvested?: number; // DEPRECATED: Calculated dynamically
   profit?: number; // DEPRECATED: Calculated dynamically
 }
 

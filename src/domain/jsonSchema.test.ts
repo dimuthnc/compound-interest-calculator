@@ -20,7 +20,7 @@ const mkSnapshot = (overrides?: Partial<HistoricalSnapshot>): HistoricalSnapshot
 });
 
 describe("jsonSchema – buildExportJson", () => {
-  it("builds a stable v1 export payload without calculated fields in history", () => {
+  it("builds a stable v1 export payload with netInvested in history for historical accuracy", () => {
     const state: CalculatorState = {
       cashFlows: [
         mkCF("a", "2024-01-01", 1000, "deposit"),
@@ -45,14 +45,16 @@ describe("jsonSchema – buildExportJson", () => {
     expect(exported.history.length).toBe(1);
     expect(exported.fundName).toBe("My Fund");
 
-    // Verify that calculated fields are NOT included in exported history
+    // Verify that netInvested IS included in exported history (for historical accuracy)
+    // but other calculated fields (irr, simpleRate, profit) are NOT included
     const exportedSnapshot = exported.history[0];
     expect(exportedSnapshot).toHaveProperty('calculationDateTime');
     expect(exportedSnapshot).toHaveProperty('valuationDate');
     expect(exportedSnapshot).toHaveProperty('currentValue');
+    expect(exportedSnapshot).toHaveProperty('netInvested'); // Now stored for historical accuracy
+    expect(exportedSnapshot.netInvested).toBe(1100);
     expect(exportedSnapshot).not.toHaveProperty('irr');
     expect(exportedSnapshot).not.toHaveProperty('simpleRate');
-    expect(exportedSnapshot).not.toHaveProperty('netInvested');
     expect(exportedSnapshot).not.toHaveProperty('profit');
   });
 });

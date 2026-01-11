@@ -223,12 +223,16 @@ export function useCalculator() {
 
     const calculationDateTime = new Date().toISOString();
 
-    // Only store valuationDate and currentValue
-    // Calculated fields (irr, simpleRate, netInvested, profit) will be computed dynamically
+    // Calculate netInvested at the time of snapshot creation
+    const snapshotNetInvested = computeNetInvested(sorted);
+
+    // Store valuationDate, currentValue, AND netInvested
+    // Other fields (irr, simpleRate, profit) will be computed dynamically
     const snapshot: HistoricalSnapshot = {
       calculationDateTime,
       valuationDate: state.valuationDate,
       currentValue: state.currentValue,
+      netInvested: snapshotNetInvested,
     };
 
     setState((prev) => ({
@@ -268,23 +272,23 @@ export function useCalculator() {
     }));
   };
 
-  const updateHistorySnapshot = (index: number, patch: Partial<Pick<HistoricalSnapshot, 'valuationDate' | 'currentValue'>>): void => {
+  const updateHistorySnapshot = (index: number, patch: Partial<Pick<HistoricalSnapshot, 'valuationDate' | 'currentValue' | 'netInvested'>>): void => {
     setState((prev) => {
       const updatedHistory = [...prev.history];
       const snapshot = updatedHistory[index];
 
       if (!snapshot) return prev;
 
-      // Only update and store valuationDate and currentValue
-      // Calculated fields will be computed dynamically when needed
+      // Update valuationDate, currentValue, and netInvested
+      // Other calculated fields (irr, simpleRate, profit) will be computed dynamically when needed
       updatedHistory[index] = {
         ...snapshot,
         valuationDate: patch.valuationDate ?? snapshot.valuationDate,
         currentValue: patch.currentValue ?? snapshot.currentValue,
+        netInvested: patch.netInvested ?? snapshot.netInvested,
         // Remove any legacy calculated fields
         irr: undefined,
         simpleRate: undefined,
-        netInvested: undefined,
         profit: undefined,
       };
 
