@@ -57,6 +57,7 @@ src/
     simpleRate.ts     // Simple interest (balance × days)
     cashflow.ts       // Cash flow utilities (sorting, balances, net invested)
     jsonSchema.ts     // Export/import helpers & validation
+    summarySchema.ts  // Summary page validation & metric enrichment
   types/
     index.ts          // Shared TS interfaces/types
   hooks/
@@ -76,6 +77,9 @@ src/
       HistoryChart.tsx
     io/
       ImportExportPanel.tsx
+    summary/
+      SummaryPage.tsx           // Multi-fund comparison page
+      RateComparisonChart.tsx   // IRR/Simple Rate comparison chart
     common/
       Button.tsx
       Input.tsx
@@ -85,7 +89,7 @@ src/
     serviceWorkerRegistration.ts
     // manifest.webmanifest typically resides in public/ or root
   App.tsx
-  main.tsx
+  main.tsx            // React Router setup with / and /summary routes
   index.css          // Tailwind base/styles
 ```
 

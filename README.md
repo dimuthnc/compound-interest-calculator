@@ -33,6 +33,7 @@ The app lets you:
   - [Historical Snapshots & Charts](#historical-snapshots--charts)
   - [JSON Export / Import](#json-export--import)
   - [Autosave via localStorage](#autosave-via-localstorage)
+- [Summary Page (Multi-Fund Comparison)](#summary-page-multi-fund-comparison)
 - [Getting Started (Local Development)](#getting-started-local-development)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
@@ -48,11 +49,13 @@ The app lets you:
   - [6. Export Scenario as JSON](#6-export-scenario-as-json)
   - [7. Import Scenario from JSON](#7-import-scenario-from-json)
   - [8. Clear All Data](#8-clear-all-data)
+  - [9. Compare Multiple Funds (Summary Page)](#9-compare-multiple-funds-summary-page)
 - [Data Model](#data-model)
   - [CashFlowEntry](#cashflowentry)
   - [HistoricalSnapshot](#historicalsnapshot)
   - [CalculatorState](#calculatorstate)
   - [ExportedScenarioJson](#exportedscenariojson)
+  - [SummaryFund](#summaryfund)
 - [Architecture & Tech Stack](#architecture--tech-stack)
   - [Front-End Architecture](#front-end-architecture)
   - [Directory Structure](#directory-structure)
@@ -85,6 +88,12 @@ The app lets you:
     - Net invested capital
     - Profit
   - View snapshots in a **history table** and as a **line chart** over time.
+
+- **Multi-Fund Summary Page** *(New!)*
+  - Import multiple fund JSON exports to compare performance side by side.
+  - View **IRR Comparison** and **Simple Rate Comparison** charts across all funds.
+  - Dynamically calculates metrics if not present in imported files.
+  - Replace or remove funds as needed.
 
 - **Offline-First PWA**
   - Installable on supporting browsers.
@@ -278,6 +287,53 @@ If localStorage is unavailable or throws (e.g. quota exceeded), the app falls ba
 
 ---
 
+## Summary Page (Multi-Fund Comparison)
+
+The **Summary Page** (`/summary`) allows you to compare performance across multiple funds by importing their exported JSON files.
+
+### Accessing the Summary Page
+
+- Click the **"Summary"** link in the header navigation from the main calculator.
+- Or navigate directly to `/summary` in your browser.
+
+### Importing Funds
+
+1. Click **"Import JSON Files"** to open the file picker.
+2. Select one or more JSON files that were exported from the main calculator.
+3. Each file must contain:
+   - A non-empty `fundName`.
+   - At least one historical snapshot with `valuationDate` and `currentValue`.
+4. Successfully imported funds appear in the **"Imported Funds"** list.
+
+### Duplicate Fund Handling
+
+- If you import a fund with the same name as an existing one, the **new import replaces** the old one.
+- This allows you to update a fund's data without manually removing it first.
+
+### Dynamic Metric Calculation
+
+- If imported history entries are missing `irr`, `simpleRate`, or `netInvested`, the app **calculates them dynamically** using the fund's cash flows.
+- A ⚡ indicator appears next to funds with dynamically calculated metrics.
+- This ensures backward compatibility with older exports.
+
+### Comparison Charts
+
+The Summary page displays two side-by-side charts:
+
+1. **IRR Comparison** – Shows the annualized effective return (XIRR-style) for each fund over time.
+2. **Simple Rate Comparison** – Shows the simple annual interest rate for each fund over time.
+
+Each fund is represented by a different colored line. The x-axis shows valuation dates, and the y-axis shows the rate as a percentage.
+
+### Managing Funds
+
+- **Remove individual funds** – Click the trash icon next to a fund name.
+- **Clear all funds** – Click the "Clear All Funds" button to remove all imported data.
+
+> **Note:** The Summary page does not persist data to localStorage. All imported funds are stored in memory and will be lost on page refresh.
+
+---
+
 ## Getting Started (Local Development)
 
 ### Prerequisites
@@ -448,12 +504,30 @@ To restore a previously exported scenario:
 
 ### 8. Clear All Data
 
-Use **“Clear All”** to:
+Use **"Clear All"** to:
 
 - Remove all cash flows.
 - Clear valuation date, current value, and results.
 - Clear all historical snapshots.
 - Reset the `localStorage` state for this app.
+
+### 9. Compare Multiple Funds (Summary Page)
+
+To compare performance across different funds:
+
+1. **Export each fund** from the main calculator as a JSON file (see step 6).
+2. **Navigate to Summary** by clicking "Summary" in the header, or go to `/summary`.
+3. **Import fund files**:
+   - Click "Import JSON Files".
+   - Select multiple JSON files at once, or import them one by one.
+4. **View comparison charts**:
+   - The **IRR Comparison** chart shows annualized returns for all funds.
+   - The **Simple Rate Comparison** chart shows simple interest rates for all funds.
+5. **Manage funds**:
+   - Remove individual funds by clicking the trash icon.
+   - Clear all funds with the "Clear All Funds" button.
+
+> **Tip:** If a fund has the same name as one already imported, the new version replaces the old one automatically.
 
 ---
 
@@ -517,6 +591,31 @@ export interface ExportedScenarioJson {
 
 The **import/export** helpers in `src/domain/jsonSchema.ts` make sure this format is stable and forward-compatible.
 
+### SummaryFund
+
+Used by the Summary page for multi-fund comparison:
+
+```ts
+export interface SummarySnapshot {
+  calculationDateTime: string;
+  valuationDate: string;
+  currentValue: number;
+  netInvested: number;
+  irr: number | null;
+  simpleRate: number | null;
+  profit: number;
+  isDynamicallyCalculated?: boolean; // true if metrics were computed at import time
+}
+
+export interface SummaryFund {
+  fundName: string;
+  cashFlows: CashFlowEntry[];
+  history: SummarySnapshot[];
+}
+```
+
+The **summary validation** helpers in `src/domain/summarySchema.ts` handle parsing, validation, and dynamic metric calculation for imported fund files.
+
 ---
 
 ## Architecture & Tech Stack
@@ -547,6 +646,7 @@ src/
     simpleRate.ts     // Simple rate (balance × days)
     cashflow.ts       // Cash flow utilities
     jsonSchema.ts     // Export/import helpers & validation
+    summarySchema.ts  // Summary page validation & metric enrichment
   types/
     index.ts          // Shared TS interfaces/types
   hooks/
@@ -566,6 +666,9 @@ src/
       HistoryChart.tsx
     io/
       ImportExportPanel.tsx
+    summary/
+      SummaryPage.tsx           // Multi-fund comparison page
+      RateComparisonChart.tsx   // IRR/Simple Rate comparison chart
     common/
       Button.tsx
       Input.tsx
@@ -574,7 +677,7 @@ src/
   pwa/
     serviceWorkerRegistration.ts
   App.tsx
-  main.tsx
+  main.tsx            // React Router setup with / and /summary routes
   index.css
 ```
 
@@ -591,6 +694,10 @@ All financial logic lives in `src/domain` as **pure functions**:
   - Computing net invested capital.
   - Building events and balances for simple rate.
 - JSON import/export helpers in `jsonSchema.ts`.
+- Summary page validation and metric enrichment in `summarySchema.ts`:
+  - `parseSummaryFundJson(...)` – validates imported fund files.
+  - `addOrReplaceFund(...)` – manages fund list with duplicate handling.
+  - Dynamic calculation of missing IRR/simple rate values.
 
 These functions:
 
