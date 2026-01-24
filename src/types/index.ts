@@ -43,3 +43,26 @@ export interface ExportedScenarioJson {
   history: HistoricalSnapshot[];
   fundName?: string | null; // optional for backward compatibility
 }
+
+// Summary page types for multi-fund comparison
+
+/** A snapshot with computed metrics for the summary page */
+export interface SummarySnapshot {
+  calculationDateTime: string;
+  valuationDate: string;
+  currentValue: number;
+  netInvested: number;
+  irr: number | null;
+  simpleRate: number | null;
+  profit: number;
+  /** Indicates if metrics were dynamically calculated (vs pre-computed) */
+  isDynamicallyCalculated?: boolean;
+}
+
+/** A fund imported into the summary page */
+export interface SummaryFund {
+  fundName: string;
+  cashFlows: CashFlowEntry[];
+  history: SummarySnapshot[];
+}
+
