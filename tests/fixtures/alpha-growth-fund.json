@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "cashFlows": [
+    {
+      "date": "2025-08-25",
+      "amount": 5858.24,
+      "direction": "deposit"
+    }
+  ],
+  "valuationDate": "2026-01-24",
+  "currentValue": 6159.22,
+  "history": [
+    {
+      "calculationDateTime": "2025-11-18T18:59:42.333Z",
+      "valuationDate": "2025-11-19",
+      "currentValue": 6013
+    },
+    {
+      "calculationDateTime": "2025-11-28T12:40:53.270Z",
+      "valuationDate": "2025-11-28",
+      "currentValue": 6026.27,
+      "netInvested": 5858.24
+    },
+    {
+      "calculationDateTime": "2025-12-08T14:31:05.926Z",
+      "valuationDate": "2025-12-08",
+      "currentValue": 6041.77,
+      "netInvested": 5858.24
+    },
+    {
+      "calculationDateTime": "2025-12-24T17:22:26.185Z",
+      "valuationDate": "2025-12-25",
+      "currentValue": 6068.39,
+      "netInvested": 5858.24
+    },
+    {
+      "calculationDateTime": "2026-01-11T07:24:04.037Z",
+      "valuationDate": "2026-01-11",
+      "currentValue": 6132.91,
+      "netInvested": 5858.24
+    },
+    {
+      "calculationDateTime": "2026-01-24T02:45:46.321Z",
+      "valuationDate": "2026-01-24",
+      "currentValue": 6159.22,
+      "netInvested": 5858.24
+    }
+  ],
+  "fundName": "Alpha Growth Fund"
+}
