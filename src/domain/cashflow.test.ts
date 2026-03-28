@@ -148,4 +148,65 @@ describe("computeSnapshotMetrics", () => {
     expect(metrics.profit).toBe(300); // 1800 - 1500 = 300
     expect(metrics.hasStoredNetInvested).toBe(false);
   });
+
+  it("excludes cash flows dated after the snapshot's valuation date (regression: future cash flows distort historical metrics)", () => {
+    // Scenario: User had 2 deposits when snapshot was taken, then added a 3rd deposit later.
+    // The 3rd deposit should NOT affect the historical snapshot's calculations.
+    const cashFlows: CashFlowEntry[] = [
+      makeEntry({ id: "1", date: "2025-06-17", amount: 500, direction: "deposit" }),
+      makeEntry({ id: "2", date: "2025-11-10", amount: 500, direction: "deposit" }),
+      // This 3rd deposit was added AFTER the snapshot was taken
+      makeEntry({ id: "3", date: "2025-12-15", amount: 500, direction: "deposit" }),
+    ];
+
+    const snapshot: Pick<HistoricalSnapshot, 'valuationDate' | 'currentValue' | 'netInvested'> = {
+      valuationDate: "2025-11-19",
+      currentValue: 1081.99,
+      netInvested: 1000, // Stored at snapshot time (only 2 deposits of 500)
+    };
+
+    const metrics = computeSnapshotMetrics(snapshot, cashFlows);
+
+    // netInvested should use stored value
+    expect(metrics.netInvested).toBe(1000);
+
+    // Profit should be positive: 1081.99 - 1000 = 81.99
+    expect(metrics.profit).toBeCloseTo(81.99);
+
+    // IRR and simple rate should be POSITIVE (profitable scenario)
+    expect(metrics.irr).not.toBeNull();
+    expect(metrics.irr!).toBeGreaterThan(0);
+
+    expect(metrics.simpleRate).not.toBeNull();
+    expect(metrics.simpleRate!).toBeGreaterThan(0);
+  });
+
+  it("excludes future cash flows even when netInvested is not stored", () => {
+    // Old data format: no stored netInvested, but future cash flows should still be excluded
+    const cashFlows: CashFlowEntry[] = [
+      makeEntry({ id: "1", date: "2024-01-01", amount: 1000, direction: "deposit" }),
+      makeEntry({ id: "2", date: "2024-06-01", amount: 500, direction: "deposit" }),
+      // Added after the snapshot was taken
+      makeEntry({ id: "3", date: "2025-03-01", amount: 2000, direction: "deposit" }),
+    ];
+
+    const snapshot: Pick<HistoricalSnapshot, 'valuationDate' | 'currentValue' | 'netInvested'> = {
+      valuationDate: "2024-12-31",
+      currentValue: 1800,
+      netInvested: undefined, // Old data: not stored
+    };
+
+    const metrics = computeSnapshotMetrics(snapshot, cashFlows);
+
+    // Should only count deposits up to 2024-12-31: 1000 + 500 = 1500
+    expect(metrics.netInvested).toBe(1500);
+    expect(metrics.profit).toBe(300); // 1800 - 1500
+    expect(metrics.hasStoredNetInvested).toBe(false);
+
+    // Should be positive (profitable)
+    expect(metrics.irr).not.toBeNull();
+    expect(metrics.irr!).toBeGreaterThan(0);
+    expect(metrics.simpleRate).not.toBeNull();
+    expect(metrics.simpleRate!).toBeGreaterThan(0);
+  });
 });
