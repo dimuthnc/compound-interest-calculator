@@ -52,7 +52,7 @@ export function mapToIrrCashFlows(
  * For IRR and simpleRate: Always calculated dynamically based on stored netInvested.
  *
  * @param snapshot - The historical snapshot with valuationDate, currentValue, and optionally netInvested
- * @param cashFlows - The cash flows (only used if netInvested is not stored in snapshot)
+ * @param cashFlows - The full set of cash flows (filtered internally to only include those on or before valuationDate)
  * @returns Computed metrics: irr, simpleRate, netInvested, profit, and hasStoredNetInvested flag
  */
 export function computeSnapshotMetrics(
@@ -67,28 +67,33 @@ export function computeSnapshotMetrics(
 } {
   const sorted = sortCashFlowsByDate(cashFlows);
 
-  // Use stored netInvested if available, otherwise calculate from current cashflows
+  // Only include cash flows on or before the snapshot's valuation date.
+  // Cash flows added after the snapshot was taken should not affect historical calculations.
+  const relevantCashFlows = sorted.filter(
+    (cf) => cf.date <= snapshot.valuationDate
+  );
+
+  // Use stored netInvested if available, otherwise calculate from relevant cashflows
   const hasStoredNetInvested = typeof snapshot.netInvested === 'number';
   const netInvested = hasStoredNetInvested
     ? snapshot.netInvested!
-    : computeNetInvested(sorted);
+    : computeNetInvested(relevantCashFlows);
 
   const profit = snapshot.currentValue - netInvested;
 
   let irr: number | null = null;
   let simpleRate: number | null = null;
 
-  // For IRR and simpleRate, we need to calculate based on a consistent view
-  // We create synthetic cashflows based on the stored netInvested for accurate calculations
-  if (sorted.length > 0) {
+  // For IRR and simpleRate, use only cash flows up to the snapshot's valuation date
+  // to ensure historical calculations are not distorted by later transactions
+  if (relevantCashFlows.length > 0) {
     const valuationDate = new Date(snapshot.valuationDate);
 
-    // Calculate IRR using the current cashflow structure but actual dates
-    const irrFlows = mapToIrrCashFlows(sorted, valuationDate, snapshot.currentValue);
+    const irrFlows = mapToIrrCashFlows(relevantCashFlows, valuationDate, snapshot.currentValue);
     irr = computeIrr(irrFlows);
 
     simpleRate = computeSimpleRate({
-      cashFlows: sorted,
+      cashFlows: relevantCashFlows,
       valuationDate,
       currentValue: snapshot.currentValue,
     });

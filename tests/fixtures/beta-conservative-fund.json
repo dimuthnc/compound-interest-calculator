@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "cashFlows": [
+    {
+      "date": "2025-08-25",
+      "amount": 5000,
+      "direction": "deposit"
+    }
+  ],
+  "valuationDate": "2026-01-24",
+  "currentValue": 5212.6,
+  "history": [
+    {
+      "calculationDateTime": "2025-11-18T16:43:00.168Z",
+      "valuationDate": "2025-11-19",
+      "currentValue": 5113.14,
+      "netInvested": 5000
+    },
+    {
+      "calculationDateTime": "2025-11-28T12:41:53.363Z",
+      "valuationDate": "2025-11-28",
+      "currentValue": 5158.02,
+      "netInvested": 5000
+    },
+    {
+      "calculationDateTime": "2025-12-08T14:32:09.706Z",
+      "valuationDate": "2025-12-08",
+      "currentValue": 5147.86,
+      "netInvested": 5000
+    },
+    {
+      "calculationDateTime": "2025-12-24T17:24:39.921Z",
+      "valuationDate": "2025-12-25",
+      "currentValue": 5170.2,
+      "netInvested": 5000
+    },
+    {
+      "calculationDateTime": "2026-01-11T07:22:44.189Z",
+      "valuationDate": "2026-01-11",
+      "currentValue": 5183.42,
+      "netInvested": 5000
+    },
+    {
+      "calculationDateTime": "2026-01-24T02:49:29.358Z",
+      "valuationDate": "2026-01-24",
+      "currentValue": 5212.6,
+      "netInvested": 5000
+    }
+  ],
+  "fundName": "Beta Conservative Fund"
+}

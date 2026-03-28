@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "cashFlows": [
+    {
+      "date": "2025-01-01",
+      "amount": 5000,
+      "direction": "deposit"
+    }
+  ],
+  "valuationDate": "2025-06-01",
+  "currentValue": 5100,
+  "history": [
+    {
+      "calculationDateTime": "2025-06-01T10:00:00.000Z",
+      "valuationDate": "2025-06-01",
+      "currentValue": 5100,
+      "netInvested": 5000
+    }
+  ],
+  "fundName": "Delta Single Snapshot Fund"
+}
