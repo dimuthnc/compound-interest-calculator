@@ -1,6 +1,7 @@
 import type React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export interface CurrentValueFormProps {
@@ -57,12 +58,27 @@ export function CurrentValueForm({
         </div>
         <div className="grid w-full max-w-sm items-center gap-1.5">
           <Label htmlFor="valuationDate">Valuation Date</Label>
-          <Input
-            id="valuationDate"
-            type="date"
-            value={valuationDate ?? ''}
-            onChange={handleDateChange}
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              id="valuationDate"
+              type="date"
+              value={valuationDate ?? ''}
+              onChange={handleDateChange}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                onValuationDateChange(`${yyyy}-${mm}-${dd}`);
+              }}
+            >
+              Today
+            </Button>
+          </div>
           <p className="text-xs text-muted-foreground">
             The date at which the fund value is measured.
           </p>
